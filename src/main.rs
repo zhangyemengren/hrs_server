@@ -1,4 +1,8 @@
-use axum::{response::{Html, Json}, routing::get, Router};
+use axum::{
+    response::{Html, Json},
+    routing::get,
+    Router,
+};
 use serde_json::{json, Value};
 
 #[tokio::main]
