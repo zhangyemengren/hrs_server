@@ -11,9 +11,6 @@ env:
     SQLX_VERSION: 0.7
     SQLX_FEATURES: "rustls,postgres"
     DATABASE_URL: "postgres://postgres:qwer1234@localhost:5432/hrs"
-    POSTGRES_USER: postgres
-    POSTGRES_PASSWORD: qwer1234
-    POSTGRES_DB: hrs
 
 jobs:
     fmt:
@@ -31,10 +28,10 @@ jobs:
         services:
             postgres:
                 image: postgres:latest
-#                env:
-#                    POSTGRES_USER: postgres
-#                    POSTGRES_PASSWORD: qwer1234
-#                    POSTGRES_DB: hrs
+                env:
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: qwer1234
+                    POSTGRES_DB: hrs
                 ports:
                     - 5432:5432
         steps:
@@ -45,7 +42,7 @@ jobs:
                   key: sqlx-${{ env.SQLX_VERSION }}
             - name: Install sqlx-cli
               run: |
-                  cargo install sqlx-cli --version=${{ env.SQLX_VERSION }} --features ${{ env.SQLX_FEATURES }} --no-default-features --locked
+                  cargo install sqlx-cli --version=${{ env.SQLX_VERSION }} --features ${{ env.SQLX_FEATURES }} --no-default-features
             - name: Migrate database
               run: |
                   sqlx database create
