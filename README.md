@@ -11,6 +11,8 @@
 ├── LICENSE
 ├── README.md
 ├── assets # 资源文件
+├── crates # 库封装
+├── locales # 国际化文案
 ├── migrations # 数据库迁移文件
 ├── script # 脚本文件
 ├── src # 主体代码

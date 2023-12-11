@@ -607,6 +607,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "hrs_server_macros"
+version = "0.1.0"
+dependencies = [
+ "hrs_server_proc_macro",
+]
+
+[[package]]
+name = "hrs_server_proc_macro"
+version = "0.1.0"
+
+[[package]]
 name = "http"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

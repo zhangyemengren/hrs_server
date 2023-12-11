@@ -1,0 +1,7 @@
+[package]
+name = "hrs_server_macros"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+hrs_server_proc_macro = { path = "../proc_macro", version = "0.1.0" }
