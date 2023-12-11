@@ -1,4 +1,4 @@
-use hrs_server_macros::{t, i18n};
+use hrs_server_macros::{i18n, t};
 
 #[test]
 fn test_t() {
@@ -7,7 +7,6 @@ fn test_t() {
 i18n!();
 
 #[test]
-fn test_proc(){
+fn test_proc() {
     assert_eq!(i18n(), 42);
 }
-
