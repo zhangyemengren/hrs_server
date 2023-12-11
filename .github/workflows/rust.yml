@@ -8,6 +8,12 @@ on:
 
 env:
     CARGO_TERM_COLOR: always
+    SQLX_VERSION: 0.7.1
+    SQLX_FEATURES: "rustls,postgres"
+    DATABASE_URL: "postgres://postgres:qwer1234@localhost:5432/hrs"
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: qwer1234
+    POSTGRES_DB: hrs
 
 jobs:
     fmt:
@@ -20,15 +26,34 @@ jobs:
             - name: Run cargo fmt
               run: |
                   cargo fmt --all -- --check
-#    test:
-#        runs-on: ${{ matrix.os }}
-#        strategy:
-#            matrix:
-#                os: [ubuntu-latest, windows-latest, macOS-latest]
-#        steps:
-#            - uses: actions/checkout@v3
-#            - uses: dtolnay/rust-toolchain@stable
-#            - uses: swatinem/rust-cache@v2
-#            - name: Run cargo test
-#              run: |
-#                  cargo test
+    test:
+        runs-on: ubuntu-latest
+        services:
+            postgres:
+                image: postgres:latest
+#                env:
+#                    POSTGRES_USER: postgres
+#                    POSTGRES_PASSWORD: qwer1234
+#                    POSTGRES_DB: hrs
+                ports:
+                    - 5432:5432
+        steps:
+            - uses: actions/checkout@v3
+            - uses: dtolnay/rust-toolchain@stable
+            - uses: swatinem/rust-cache@v2
+              with:
+                  key: sqlx-${{ env.SQLX_VERSION }}
+            - name: Install sqlx-cli
+              run: |
+                  cargo install sqlx-cli
+                  --version=${{ env.SQLX_VERSION }}
+                  --features ${{ env.SQLX_FEATURES }}
+                  --no-default-features
+                  --locked
+            - name: Migrate database
+              run: |
+                  sqlx database create
+                  sqlx migrate run
+            - name: Run cargo test
+              run: |
+                  cargo test
