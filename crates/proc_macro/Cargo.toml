@@ -8,6 +8,8 @@ edition = "2021"
 proc-macro2 = "1"
 quote = "1"
 syn = "2"
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 
 [lib]
 proc-macro = true
