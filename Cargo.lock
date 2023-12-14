@@ -616,6 +616,11 @@ dependencies = [
 [[package]]
 name = "hrs_server_proc_macro"
 version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.39",
+]
 
 [[package]]
 name = "http"
