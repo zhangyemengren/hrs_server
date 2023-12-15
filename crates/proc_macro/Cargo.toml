@@ -8,6 +8,7 @@ edition = "2021"
 proc-macro2 = "1"
 quote = "1"
 syn = "2"
+once_cell = {workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 
