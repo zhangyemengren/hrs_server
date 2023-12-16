@@ -5,13 +5,7 @@ i18n!();
 
 #[test]
 fn test_t() {
-    t!();
-    // println!("{}", t!());
-    assert!(true);
+    assert_eq!(t!("common", "hello"), "Hello World!");
+    assert_eq!(t!("common", "hello", "cn"), "你好世界！");
 }
 
-#[test]
-fn test_proc() {
-    i18n_content();
-    assert!(true);
-}

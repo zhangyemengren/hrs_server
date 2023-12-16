@@ -101,8 +101,5 @@ pub fn generate_code(data: I18nMap) -> proc_macro2::TokenStream {
         static I18N_MAP: Lazy<HashMap<String, HashMap<String, String>>> = Lazy::new(|| {
             #x.into()
         });
-        pub fn i18n_content() {
-            println!("i18n_content");
-        }
     }
 }
