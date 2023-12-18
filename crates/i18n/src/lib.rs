@@ -18,7 +18,10 @@ macro_rules! t {
                 }
                 Some(lang_str) => match serde_json::from_str::<serde_json::Value>(lang_str) {
                     Err(_) => {
-                        println!("Json Parse Error on Name Space:{} Language Key:{} Key:{}", $name_space, $lang, $key);
+                        println!(
+                            "Json Parse Error on Name Space:{} Language Key:{} Key:{}",
+                            $name_space, $lang, $key
+                        );
                         "".to_string()
                     }
                     Ok(json) => match json.get($key) {
@@ -26,13 +29,16 @@ macro_rules! t {
                             println!("Key:{} Not Found", $key);
                             "".to_string()
                         }
-                        Some(v) => v.as_str().unwrap_or_else(|| {
-                            println!("Key:{} Not String", $key);
-                            ""
-                        }).to_string()
-                    }
-                }
-            }
+                        Some(v) => v
+                            .as_str()
+                            .unwrap_or_else(|| {
+                                println!("Key:{} Not String", $key);
+                                ""
+                            })
+                            .to_string(),
+                    },
+                },
+            },
         }
     }};
 }
