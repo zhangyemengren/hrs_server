@@ -1,8 +1,9 @@
-use hrs_server::startup;
+use hrs_server::startup::App;
 
 #[tokio::main]
 async fn main() {
-    let app = startup::App::new().serve;
+    App::init_log();
+    let app = App::new().serve;
 
     // run it
     let listener = tokio::net::TcpListener::bind("127.0.0.1:8000")

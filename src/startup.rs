@@ -13,7 +13,7 @@ pub struct App {
 }
 
 impl App {
-    pub fn new() -> Self {
+    pub fn init_log() {
         tracing_subscriber::registry()
             .with(
                 tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
@@ -25,7 +25,8 @@ impl App {
             )
             .with(tracing_subscriber::fmt::layer())
             .init();
-
+    }
+    pub fn new() -> Self {
         // build our application with a route
         let app = Router::new()
             .route("/", get(root))

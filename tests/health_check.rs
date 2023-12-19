@@ -12,7 +12,6 @@ async fn spawn_app() {
         .await
         .unwrap();
     println!("listening on {}", listener.local_addr().unwrap());
-    // let _ =tokio::spawn(server);
     tokio::spawn(async move {
         axum::serve(listener, app).await.unwrap();
     });
