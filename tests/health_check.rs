@@ -46,5 +46,5 @@ async fn hello_world() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
-    assert_eq!(body, "<h1>Hello, World!</h1>");
+    assert_eq!(body, "Hello, World!");
 }
