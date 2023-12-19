@@ -1,9 +1,13 @@
+use axum::http::StatusCode;
 use axum::response::Html;
 use axum::Json;
 use serde_json::{json, Value};
 
-pub async fn handler() -> Html<&'static str> {
-    Html("<h1>Hello, World!</h1>")
+pub async fn root() -> &'static str {
+    "Hello, World!"
+}
+pub async fn health_check() -> StatusCode {
+    StatusCode::OK
 }
 
 pub async fn catch_all() -> Html<&'static str> {

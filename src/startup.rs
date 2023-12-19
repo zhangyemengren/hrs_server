@@ -1,4 +1,4 @@
-use crate::routes::home::{catch_all, handler, test_user};
+use crate::routes::{catch_all, health_check, root, test_user};
 use axum::extract::MatchedPath;
 use axum::http::Request;
 use axum::routing::get;
@@ -28,7 +28,8 @@ impl App {
 
         // build our application with a route
         let app = Router::new()
-            .route("/", get(handler))
+            .route("/", get(root))
+            .route("/health_check", get(health_check))
             .route("/api/users", get(test_user))
             .route("/*all", get(catch_all))
             .layer(

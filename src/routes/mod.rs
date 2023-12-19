@@ -1,1 +1,3 @@
-pub mod home;
+mod home;
+// 重导出
+pub use home::*;
