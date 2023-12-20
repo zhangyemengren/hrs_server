@@ -11,6 +11,7 @@
 ├── LICENSE
 ├── README.md
 ├── assets # 资源文件
+├── config # 配置文件
 ├── crates # 库封装
 ├── locales # 国际化文案
 ├── migrations # 数据库迁移文件
@@ -30,3 +31,5 @@ example: 执行print_test.rs
 ```
 cargo +nightly -Zscript print_test.rs --config /path
 ```
+
+### .env 为sqlx编译时验证所必须
