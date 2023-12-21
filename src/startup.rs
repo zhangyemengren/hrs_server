@@ -1,3 +1,4 @@
+use crate::configuration::{get_config, Configuration};
 use crate::routes::{catch_all, health_check, root, test_user};
 use axum::extract::MatchedPath;
 use axum::http::Request;
@@ -9,7 +10,8 @@ use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
 pub struct App {
-    pub serve: Router,
+    pub app: Router,
+    pub config: Configuration,
 }
 
 impl App {
@@ -50,6 +52,9 @@ impl App {
                     )
                 }),
             );
-        Self { serve: app }
+        Self {
+            app,
+            config: get_config(),
+        }
     }
 }

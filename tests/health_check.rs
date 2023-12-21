@@ -5,7 +5,7 @@ use sqlx::PgPool;
 use tower::ServiceExt;
 
 async fn spawn_app() {
-    let app = App::new().serve;
+    let app = App::new().app;
 
     // run it
     let listener = tokio::net::TcpListener::bind("127.0.0.1:8000")
@@ -33,7 +33,7 @@ async fn test_db() {
 // 可以使用tower而不生成HTTP server:
 #[tokio::test]
 async fn hello_world() {
-    let app = App::new().serve;
+    let app = App::new().app;
 
     // `Router` implements `tower::Service<Request<Body>>` so we can
     // call it like any tower service, no need to run an HTTP server.
