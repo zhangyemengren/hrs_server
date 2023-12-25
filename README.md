@@ -32,4 +32,7 @@ example: 执行print_test.rs
 cargo +nightly -Zscript print_test.rs --config /path
 ```
 
-### .env 为sqlx编译时验证所必须
+### 环境变量
+- .env 为sqlx编译时验证所必须
+- config/* 存放固定配置文件
+- 运行时写入/高优先级/用于CI中 例如:  APP_APPLICATION_PORT=9001 cargo run 格式：前缀_路径=值
