@@ -1,5 +1,8 @@
 # hrs
 
+## 业务架构图
+<img src="https://raw.githubusercontent.com/zhangyemengren/hrs_server/main/assets/business_arch.png" alt="业务架构图">
+
 ## 运行步骤
 
 ### 启动DB
@@ -22,12 +25,25 @@
 ### 运行服务
 - cargo run
 
-## 业务架构图
-<img src="https://raw.githubusercontent.com/zhangyemengren/hrs_server/main/assets/business_arch.png" alt="业务架构图">
+### 执行测试
+- cargo test
+
+### 执行脚本
+采用cargo script功能 尚未稳定 需要 rustc 1.76.0-nightly 以上
+```run
+cd script
+cargo +nightly -Zscript name.rs
+```
+example: 执行print_test.rs
+```
+cargo +nightly -Zscript print_test.rs --config /path
+```
 
 ## 项目结构
 ```
 .
+├── .github # github action
+├── .env # sqlx编译时验证必须
 ├── Cargo.lock
 ├── Cargo.toml
 ├── LICENSE
@@ -41,17 +57,6 @@
 ├── src # 主体代码
 ├── target # 编译目标文件
 └── tests # 测试文件
-```
-
-### script文件
-采用cargo script功能 尚未稳定 需要 rustc 1.76.0-nightly 以上
-```run
-cd script
-cargo +nightly -Zscript name.rs
-```
-example: 执行print_test.rs
-```
-cargo +nightly -Zscript print_test.rs --config /path
 ```
 
 ### 环境变量
