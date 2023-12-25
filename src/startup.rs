@@ -15,7 +15,13 @@ pub struct App {
 }
 
 impl App {
-    pub fn init_log() {
+    pub fn new() -> Self {
+        Self {
+            app: Self::get_router(),
+            config: get_config(),
+        }
+    }
+    pub fn effect_with_log(self) -> Self {
         tracing_subscriber::registry()
             .with(
                 tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
@@ -27,10 +33,7 @@ impl App {
             )
             .with(tracing_subscriber::fmt::layer())
             .init();
-    }
-    pub fn new() -> Self {
-        let routers = Self::get_router();
-        let app = routers.layer(TraceLayer::new_for_http().make_span_with(
+        let app = self.app.layer(TraceLayer::new_for_http().make_span_with(
             |request: &Request<_>| {
                 // Log the matched route's path (with placeholders not filled in).
                 // Use request.uri() or OriginalUri if you want the real path.
@@ -47,19 +50,44 @@ impl App {
                 )
             },
         ));
-        Self {
-            app,
-            config: get_config(),
-        }
+        Self { app, ..self }
+    }
+
+    // pub fn build(self) -> Self{
+    //     self.effect_with_log()
+    // }
+
+    pub async fn get_listener(&self) -> Result<tokio::net::TcpListener, anyhow::Error> {
+        let listener = tokio::net::TcpListener::bind(format!(
+            "{}:{}",
+            self.config.application.host, self.config.application.port
+        ))
+        .await?;
+        Ok(listener)
+    }
+
+    pub async fn run(self) -> Result<(), anyhow::Error> {
+        let listener = self.get_listener().await?;
+        println!("listening on {}", listener.local_addr().unwrap());
+        axum::serve(listener, self.app).await?;
+        Ok(())
+    }
+
+    pub async fn spawn(self) -> Result<(), anyhow::Error> {
+        let listener = self.get_listener().await?;
+        tokio::spawn(async move {
+            axum::serve(listener, self.app).await.unwrap();
+        });
+        Ok(())
     }
     fn get_router() -> Router {
         let api_v1 = Router::new().route("/users", get(get_user));
         let api = Router::new().nest("/v1", api_v1);
         let routers = Router::new()
-            .nest("/api", api)
             .route("/", get(root))
             .route("/health_check", get(health_check))
-            .route("/*all", get(catch_all));
+            .route("/*all", get(catch_all))
+            .nest("/api", api);
         routers
     }
 }

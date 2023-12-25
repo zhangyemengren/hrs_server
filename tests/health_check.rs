@@ -4,22 +4,9 @@ use hrs_server::startup::App;
 use sqlx::PgPool;
 use tower::ServiceExt;
 
-async fn spawn_app() {
-    let app = App::new().app;
-
-    // run it
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:8000")
-        .await
-        .unwrap();
-    println!("listening on {}", listener.local_addr().unwrap());
-    tokio::spawn(async move {
-        axum::serve(listener, app).await.unwrap();
-    });
-}
-
 #[sqlx::test]
-async fn test_db() {
-    spawn_app().await;
+async fn test_db_link() {
+    App::new().spawn().await.expect("Spawn server failed");
     let pool = PgPool::connect("postgres://postgres:qwer1234@localhost:5432/hrs")
         .await
         .unwrap();
@@ -32,7 +19,7 @@ async fn test_db() {
 }
 // 可以使用tower而不生成HTTP server:
 #[tokio::test]
-async fn hello_world() {
+async fn test_root() {
     let app = App::new().app;
 
     // `Router` implements `tower::Service<Request<Body>>` so we can
@@ -46,4 +33,44 @@ async fn hello_world() {
 
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
     assert_eq!(body, "Hello, World!");
+}
+
+#[tokio::test]
+async fn test_health_check() {
+    let app = App::new().app;
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/health_check")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    assert_eq!(body, "");
+}
+
+#[tokio::test]
+async fn test_not_found() {
+    let app = App::new().app;
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/not_found")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+
+    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    assert_eq!(body, "<h1>404</h1>");
 }
