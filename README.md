@@ -1,5 +1,27 @@
 # hrs
 
+## 运行步骤
+
+### 启动DB
+- docker pull postgres
+- docker run -d  
+  --name hrs  
+  -e POSTGRES_USER=postgres  
+  -e POSTGRES_PASSWORD=qwer1234  
+  -e POSTGRES_DB=hrs
+  -v /YOUR_LOCAL_PATH:/var/lib/postgresql/data  
+  -h localhost  
+  -p 5432:5432  
+  postgres  
+
+### DB迁移
+- cargo install sqlx-cli --no-default-features --features postgres
+- sqlx database create
+- sqlx migrate run
+
+### 运行服务
+- cargo run
+
 ## 业务架构图
 <img src="https://raw.githubusercontent.com/zhangyemengren/hrs_server/main/assets/business_arch.png" alt="业务架构图">
 
