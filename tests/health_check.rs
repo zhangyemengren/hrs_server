@@ -1,12 +1,12 @@
 use axum::body::{to_bytes, Body};
 use axum::http::{Request, StatusCode};
-use hrs_server::startup::App;
+use hrs_server::startup::{spawn, App};
 use sqlx::PgPool;
 use tower::ServiceExt;
 
 #[sqlx::test]
 async fn test_db_link() {
-    App::new().spawn().await.expect("Spawn server failed");
+    spawn().await.expect("Spawn server failed");
     let pool = PgPool::connect("postgres://postgres:qwer1234@localhost:5432/hrs")
         .await
         .unwrap();
@@ -20,7 +20,7 @@ async fn test_db_link() {
 // 可以使用tower而不生成HTTP server:
 #[tokio::test]
 async fn test_root() {
-    let app = App::new().app;
+    let app = App::new().with_router().await.app;
 
     // `Router` implements `tower::Service<Request<Body>>` so we can
     // call it like any tower service, no need to run an HTTP server.
@@ -37,7 +37,7 @@ async fn test_root() {
 
 #[tokio::test]
 async fn test_health_check() {
-    let app = App::new().app;
+    let app = App::new().with_router().await.app;
 
     let response = app
         .oneshot(
@@ -57,7 +57,7 @@ async fn test_health_check() {
 
 #[tokio::test]
 async fn test_not_found() {
-    let app = App::new().app;
+    let app = App::new().with_router().await.app;
 
     let response = app
         .oneshot(

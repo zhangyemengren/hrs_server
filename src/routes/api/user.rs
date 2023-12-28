@@ -1,7 +1,9 @@
+use axum::extract::State;
 use axum::Json;
 use serde_json::{json, Value};
+use sqlx::PgPool;
 
-pub async fn get_user() -> Json<Value> {
+pub async fn get_user(State(_pool): State<PgPool>) -> Json<Value> {
     Json(json!({
         "data":[
             {

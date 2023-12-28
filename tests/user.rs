@@ -6,7 +6,7 @@ use tower::ServiceExt;
 
 #[tokio::test]
 async fn test_get_user() {
-    let app = App::new().app;
+    let app = App::new().with_router().await.app;
 
     let response = app
         .oneshot(

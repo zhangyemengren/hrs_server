@@ -15,7 +15,12 @@ pub struct AppSettings {
 
 #[derive(Debug, Deserialize)]
 pub struct DatabaseSettings {
+    pub host: String,
     pub port: String,
+    pub username: String,
+    pub password: String,
+    pub db_name: String,
+    pub max_connections: u32,
 }
 
 pub fn get_config() -> Configuration {
