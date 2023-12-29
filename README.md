@@ -74,13 +74,24 @@ cargo +nightly -Zscript print_test.rs --config /path
 # 技术选型
 名称 | 描述       | 是否为库 | 是否为Rust编写
 ---|----------|------|---
-axum | web框架    | 是    | 是
-tokio | 异步运行时    | 是    | 是
-sqlx | 数据库操作    | 是    | 是
-tracing | 日志       | 是    | 是
-serde | 序列化/反序列化 | 是    | 是
-anyhow | 错误处理     | 是    | 是
-docker | 容器       | 否    | 否
-database | 储存数据库    | 否    | 否
-github action | CI/CD | 否    | 否
+[`axum`] | web框架    | 是    | 是
+[`tokio`] | 异步运行时    | 是    | 是
+[`sqlx`] | 数据库操作    | 是    | 是
+[`tracing`] | 日志       | 是    | 是
+[`serde`] | 序列化/反序列化 | 是    | 是
+[`anyhow`] | 错误处理     | 是    | 是
+[`docker`] | 容器       | 否    | 否
+[`postgresql`] | 储存数据库    | 否    | 否
+[`github action`] | CI/CD | 否    | 否
+
+[`axum`]: http://crates.io/crates/axum
+[`tokio`]: http://crates.io/crates/tokio
+[`sqlx`]: http://crates.io/crates/sqlx
+[`tracing`]: http://crates.io/crates/tracing
+[`serde`]: http://crates.io/crates/serde
+[`anyhow`]: http://crates.io/crates/anyhow
+[`docker`]: https://www.docker.com/
+[`postgresql`]: https://www.postgresql.org/
+[`github action`]: https://docs.github.com/en/actions
+
 
