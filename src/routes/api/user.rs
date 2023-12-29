@@ -18,3 +18,12 @@ pub async fn get_user(State(_pool): State<PgPool>) -> Json<Value> {
         "total": 2,
     }))
 }
+
+pub async fn add_user(State(_pool): State<PgPool>) -> Json<Value> {
+    Json(json!({
+        "data": {
+            "id": 3,
+            "name": "John Coltrane",
+        },
+    }))
+}
