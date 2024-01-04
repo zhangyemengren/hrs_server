@@ -1,4 +1,5 @@
 use crate::configuration::{get_config, Configuration};
+use crate::routes::api::get_modules;
 use crate::routes::{api::get_user, catch_all, health_check, root};
 use axum::extract::MatchedPath;
 use axum::http::Request;
@@ -77,7 +78,9 @@ impl App {
     // }
 
     pub async fn with_router(self) -> Self {
-        let api_v1 = Router::new().route("/users", get(get_user));
+        let api_v1 = Router::new()
+            .route("/users", get(get_user))
+            .route("/modules", get(get_modules));
         let api = Router::new().nest("/v1", api_v1);
         let pool = self.get_pool().await;
         let routers = Router::new()
