@@ -1,7 +1,7 @@
+use crate::startup::AppState;
 use axum::extract::State;
 use axum::response::IntoResponse;
 use axum::Json;
-use sqlx::PgPool;
 
 #[derive(serde::Serialize)]
 pub struct Module {
@@ -15,7 +15,7 @@ pub struct ModuleResponse {
     data: Vec<Module>,
 }
 
-pub async fn get_modules(State(pool): State<PgPool>) -> impl IntoResponse {
+pub async fn get_modules(State(AppState { pool, .. }): State<AppState>) -> impl IntoResponse {
     let result = sqlx::query_as!(Module, "SELECT id, type AS module_type FROM modules")
         .fetch_all(&pool)
         .await

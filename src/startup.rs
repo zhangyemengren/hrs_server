@@ -1,12 +1,13 @@
 use crate::configuration::{get_config, Configuration};
 use crate::routes::api::get_modules;
 use crate::routes::{api::get_user, catch_all, health_check, root};
-use axum::extract::{self, MatchedPath};
-use axum::http::Request;
+use axum::extract::{self, FromRef, MatchedPath};
+use axum::http::{Request, StatusCode};
 use axum::middleware::Next;
 use axum::response::Response;
 use axum::routing::get;
 use axum::{middleware, Router};
+use axum_extra::extract::cookie::{Key, PrivateCookieJar};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use tower::ServiceBuilder;
@@ -15,9 +16,22 @@ use tracing::info_span;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
+/// 应用
 pub struct App {
     pub app: Router<()>,
     pub config: Configuration,
+}
+/// 共享状态
+#[derive(Clone)]
+pub struct AppState {
+    pub pool: PgPool,
+    pub cookie_key: Key,
+}
+
+impl FromRef<AppState> for Key {
+    fn from_ref(state: &AppState) -> Self {
+        state.cookie_key.clone()
+    }
 }
 
 impl App {
@@ -86,13 +100,19 @@ impl App {
             .route("/modules", get(get_modules));
         let api = Router::new().nest("/v1", api_v1);
         let pool = self.get_pool().await;
+        let state = AppState {
+            pool,
+            cookie_key: Key::generate(),
+        };
         let routers = Router::new()
             .route("/", get(root))
             .route("/health_check", get(health_check))
             .route("/*all", get(catch_all))
             .nest("/api", api)
-            .with_state(pool)
-            .layer(ServiceBuilder::new().layer(middleware::from_fn(my_middleware)));
+            .with_state(state.clone())
+            .layer(
+                ServiceBuilder::new().layer(middleware::from_fn_with_state(state.clone(), auth)),
+            );
         Self {
             app: routers,
             ..self
@@ -123,12 +143,23 @@ pub async fn spawn() -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-pub async fn my_middleware(request: extract::Request, next: Next) -> Response {
+pub async fn auth(
+    jar: PrivateCookieJar,
+    request: extract::Request,
+    next: Next,
+) -> Result<Response, StatusCode> {
     // do something with `request`...
 
     let response = next.run(request).await;
-    println!("response: {:?}", response);
+    let data = jar.get("secret");
+    println!("response: {:?}", data);
     // do something with `response`...
-
-    response
+    Ok(response)
+    // Err(StatusCode::UNAUTHORIZED)
 }
+
+// async fn get_secret(jar: PrivateCookieJar) {
+//     if let Some(data) = jar.get("secret") {
+//         // ...
+//     }
+// }

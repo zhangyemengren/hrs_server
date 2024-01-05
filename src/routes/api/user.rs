@@ -1,9 +1,7 @@
-use axum::extract::State;
 use axum::Json;
 use serde_json::{json, Value};
-use sqlx::PgPool;
 
-pub async fn get_user(State(_pool): State<PgPool>) -> Json<Value> {
+pub async fn get_user() -> Json<Value> {
     Json(json!({
         "data":[
             {
@@ -19,7 +17,7 @@ pub async fn get_user(State(_pool): State<PgPool>) -> Json<Value> {
     }))
 }
 
-pub async fn add_user(State(_pool): State<PgPool>) -> Json<Value> {
+pub async fn add_user() -> Json<Value> {
     Json(json!({
         "data": {
             "id": 3,
