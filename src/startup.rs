@@ -1,12 +1,15 @@
 use crate::configuration::{get_config, Configuration};
 use crate::routes::api::get_modules;
 use crate::routes::{api::get_user, catch_all, health_check, root};
-use axum::extract::MatchedPath;
+use axum::extract::{self, MatchedPath};
 use axum::http::Request;
+use axum::middleware::Next;
+use axum::response::Response;
 use axum::routing::get;
-use axum::Router;
+use axum::{middleware, Router};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
+use tower::ServiceBuilder;
 use tower_http::trace::TraceLayer;
 use tracing::info_span;
 use tracing_subscriber::layer::SubscriberExt;
@@ -88,7 +91,8 @@ impl App {
             .route("/health_check", get(health_check))
             .route("/*all", get(catch_all))
             .nest("/api", api)
-            .with_state(pool);
+            .with_state(pool)
+            .layer(ServiceBuilder::new().layer(middleware::from_fn(my_middleware)));
         Self {
             app: routers,
             ..self
@@ -117,4 +121,14 @@ pub async fn spawn() -> Result<(), anyhow::Error> {
         axum::serve(listener, app.app).await.unwrap();
     });
     Ok(())
+}
+
+pub async fn my_middleware(request: extract::Request, next: Next) -> Response {
+    // do something with `request`...
+
+    let response = next.run(request).await;
+    println!("response: {:?}", response);
+    // do something with `response`...
+
+    response
 }
