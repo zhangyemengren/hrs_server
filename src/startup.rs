@@ -1,20 +1,17 @@
 use crate::configuration::{get_config, Configuration};
-use crate::routes::api::get_modules;
-use crate::routes::{api::get_user, catch_all, health_check, root};
-use axum::extract::{self, FromRef, MatchedPath};
-use axum::http::{Request, StatusCode};
-use axum::middleware::Next;
-use axum::response::Response;
+use crate::middlewares::auth;
+use crate::routes::{catch_all, get_modules, get_user, health_check, login, root};
+use axum::extract::{FromRef, MatchedPath};
+use axum::http::Request;
+use axum::middleware::{self};
 use axum::routing::get;
-use axum::{middleware, Router};
-use axum_extra::extract::cookie::{Key, PrivateCookieJar};
-use sqlx::postgres::PgPoolOptions;
-use sqlx::PgPool;
+use axum::Router;
+use axum_extra::extract::cookie::Key;
+use sqlx::{postgres::PgPoolOptions, PgPool};
 use tower::ServiceBuilder;
 use tower_http::trace::TraceLayer;
 use tracing::info_span;
-use tracing_subscriber::layer::SubscriberExt;
-use tracing_subscriber::util::SubscriberInitExt;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 /// 应用
 pub struct App {
@@ -96,6 +93,7 @@ impl App {
 
     pub async fn with_router(self) -> Self {
         let api_v1 = Router::new()
+            .route("/login", get(login))
             .route("/users", get(get_user))
             .route("/modules", get(get_modules));
         let api = Router::new().nest("/v1", api_v1);
@@ -141,21 +139,6 @@ pub async fn spawn() -> Result<(), anyhow::Error> {
         axum::serve(listener, app.app).await.unwrap();
     });
     Ok(())
-}
-
-pub async fn auth(
-    jar: PrivateCookieJar,
-    request: extract::Request,
-    next: Next,
-) -> Result<Response, StatusCode> {
-    // do something with `request`...
-
-    let response = next.run(request).await;
-    let data = jar.get("secret");
-    println!("response: {:?}", data);
-    // do something with `response`...
-    Ok(response)
-    // Err(StatusCode::UNAUTHORIZED)
 }
 
 // async fn get_secret(jar: PrivateCookieJar) {
