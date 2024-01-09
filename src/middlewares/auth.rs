@@ -11,15 +11,18 @@ pub async fn auth(
     jar: CookieJar,
     request: extract::Request,
     next: Next,
-) -> Result<Response, StatusCode> {
-    let url = request.uri().path();
-    if WHITELIST.contains(&url) {
+) -> Result<Response, (CookieJar, StatusCode)> {
+    let url = request.uri().path().to_string();
+    if WHITELIST.contains(&url.as_str()) {
         println!("命中白名单");
+        let response = next.run(request).await;
+        return Ok(response);
     }
+    let Some(session) = jar_private.get("session") else {
+        println!("cookies: {:?}", jar_private.get("session"));
+        return Err((jar.remove("is_login"), StatusCode::UNAUTHORIZED));
+    };
     let response = next.run(request).await;
-    let data = jar_private.get("session");
-    let data2 = jar.get("is_login");
-    println!("cookies: {:?} {:?}", data, data2);
+    println!("cookies: {:?} {:?}", session, jar.get("is_login"));
     Ok(response)
-    // Err(StatusCode::UNAUTHORIZED)
 }

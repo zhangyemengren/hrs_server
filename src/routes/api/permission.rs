@@ -3,8 +3,8 @@ use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
-use axum_extra::extract::{cookie::Cookie, CookieJar, PrivateCookieJar};
-use cookie::time::Duration;
+use axum_extra::extract::{CookieJar, PrivateCookieJar};
+use cookie::{time::Duration, Cookie};
 
 #[derive(serde::Serialize)]
 pub struct Module {
@@ -33,13 +33,11 @@ pub async fn get_modules(State(AppState { pool, .. }): State<AppState>) -> impl 
 pub async fn login(jar_private: PrivateCookieJar, jar: CookieJar) -> impl IntoResponse {
     let duration = Duration::minutes(60);
     let cookie_private = Cookie::build(("session", "this is a session"))
-        .domain("/")
         .path("/")
         .http_only(true)
         .max_age(duration)
         .build();
-    let cookie = Cookie::build(("is_login", "1")).max_age(duration).build();
-    println!("login {:?} {:?}", cookie_private, cookie);
+    let cookie = Cookie::build(("is_login", "1")).path("/").build();
     (
         jar_private.add(cookie_private),
         jar.add(cookie),
