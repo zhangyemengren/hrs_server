@@ -105,12 +105,10 @@ impl App {
         let routers = Router::new()
             .route("/", get(root))
             .route("/health_check", get(health_check))
-            .route("/*all", get(catch_all))
             .nest("/api", api)
             .with_state(state.clone())
-            .layer(
-                ServiceBuilder::new().layer(middleware::from_fn_with_state(state.clone(), auth)),
-            );
+            .layer(ServiceBuilder::new().layer(middleware::from_fn_with_state(state.clone(), auth)))
+            .route("/*all", get(catch_all));
         Self {
             app: routers,
             ..self
