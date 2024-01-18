@@ -24,6 +24,8 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 config = {version = "0.13", default-features = false, features = ["toml"]}
 cookie = "0.18"
+jsonwebtoken = "9"
+time = "0.3"
 
 #[dev-dependencies]
 #tower = { version = "0.4", features = ["util"] }
