@@ -57,22 +57,34 @@ pub struct Claims {
 }
 
 impl Jwt {
+    const COMMON_AUD: &'static str = "hrs";
+    const COMMON_SUB: &'static str = "sso";
+    const COMMON_SECRET: &'static [u8] = b"secret";
+
     pub fn new() -> Self {
         let claims = Claims::default();
         let secret = Vec::new();
         Self { secret, claims }
     }
-    pub fn aud(&mut self, aud: &str) -> &mut Self {
-        self.claims.aud = aud.to_owned();
-        self
+    pub fn aud(self, aud: &str) -> Self {
+        let aud = aud.to_owned();
+        Self {
+            claims: Claims { aud, ..self.claims },
+            ..self
+        }
     }
-    pub fn sub(&mut self, sub: &str) -> &mut Self {
-        self.claims.sub = sub.to_owned();
-        self
+    pub fn sub(self, sub: &str) -> Self {
+        let aud = sub.to_owned();
+        Self {
+            claims: Claims { aud, ..self.claims },
+            ..self
+        }
     }
-    pub fn exp(&mut self, exp: u64) -> &mut Self {
-        self.claims.exp = exp;
-        self
+    pub fn exp(self, exp: u64) -> Self {
+        Self {
+            claims: Claims { exp, ..self.claims },
+            ..self
+        }
     }
     pub fn new_token(&self) -> anyhow::Result<String> {
         let r = jwt::encode(
@@ -98,16 +110,22 @@ impl Jwt {
 impl Default for Jwt {
     fn default() -> Self {
         let mut j = Self::new();
-        j.secret = b"secret".to_vec();
+        j.secret = Self::COMMON_SECRET.to_vec();
         let utc_now = OffsetDateTime::now_utc();
         // 计算时区
-        let offset = UtcOffset::from_hms(8, 0, 0).unwrap();
+        let offset_zone = UtcOffset::from_hms(8, 0, 0).unwrap();
+        // 过期间隔
+        let offset_interval = UtcOffset::from_hms(0, 0, 10).unwrap();
         // 加默认过期间隔
-        let exp = utc_now.to_offset(offset).unix_timestamp() + 1;
+        let exp = utc_now
+            .to_offset(offset_zone)
+            .to_offset(offset_interval)
+            .unix_timestamp()
+            + 1;
 
         j.claims = Claims {
-            aud: "hrs".to_owned(),
-            sub: "sso".to_owned(),
+            aud: Self::COMMON_AUD.to_owned(),
+            sub: Self::COMMON_SUB.to_owned(),
             exp: exp as u64,
         };
         j
@@ -119,15 +137,32 @@ mod tests {
     use super::*;
     #[test]
     fn test_jwt() {
+        // 验证通过
         let j = Jwt::default();
         let token = j.new_token().unwrap();
         let data = j.validate(&token).unwrap();
         assert!(token.len() > 0);
         assert_eq!(data.claims.aud, "hrs");
         assert_eq!(data.claims.sub, "sso");
-        // let j = Jwt::default().exp(1);
-        // let token = j.new_token().unwrap();
-        // let data = j.validate(&token).map_err(|e| e.to_string()).unwrap();
-        // println!("{:?}", data);
+        // token过期
+        let j = Jwt::default().exp(1);
+        let token = j.new_token().unwrap();
+        let data = j.validate(&token);
+        let err = data
+            .unwrap_err()
+            .downcast::<jwt::errors::Error>()
+            .unwrap()
+            .into_kind();
+        assert_eq!(err, jwt::errors::ErrorKind::ExpiredSignature);
+        // aud不匹配
+        let j = Jwt::default().aud("x");
+        let token = j.new_token().unwrap();
+        let data = Jwt::default().validate(&token);
+        let err = data
+            .unwrap_err()
+            .downcast::<jwt::errors::Error>()
+            .unwrap()
+            .into_kind();
+        assert_eq!(err, jwt::errors::ErrorKind::InvalidAudience);
     }
 }
