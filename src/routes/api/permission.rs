@@ -1,4 +1,4 @@
-use crate::startup::AppState;
+use crate::{startup::AppState, Jwt};
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -10,6 +10,7 @@ use cookie::{time::Duration, Cookie};
 pub struct Module {
     id: i32,
     module_type: String,
+    icon_url: Option<String>,
 }
 
 #[derive(serde::Serialize)]
@@ -19,10 +20,13 @@ pub struct ModuleResponse {
 }
 
 pub async fn get_modules(State(AppState { pool, .. }): State<AppState>) -> impl IntoResponse {
-    let result = sqlx::query_as!(Module, "SELECT id, type AS module_type FROM modules")
-        .fetch_all(&pool)
-        .await
-        .unwrap();
+    let result = sqlx::query_as!(
+        Module,
+        "SELECT id, type AS module_type, icon_url FROM modules ORDER BY id"
+    )
+    .fetch_all(&pool)
+    .await
+    .unwrap();
 
     Json(ModuleResponse {
         total: result.len(),
@@ -32,7 +36,8 @@ pub async fn get_modules(State(AppState { pool, .. }): State<AppState>) -> impl 
 
 pub async fn login(jar_private: PrivateCookieJar, jar: CookieJar) -> impl IntoResponse {
     let duration = Duration::minutes(60);
-    let cookie_private = Cookie::build(("session", "this is a session"))
+    let token = Jwt::default().new_token().unwrap();
+    let cookie_private = Cookie::build(("token", token))
         .path("/")
         .http_only(true)
         .max_age(duration)
@@ -41,6 +46,16 @@ pub async fn login(jar_private: PrivateCookieJar, jar: CookieJar) -> impl IntoRe
     (
         jar_private.add(cookie_private),
         jar.add(cookie),
+        StatusCode::OK,
+    )
+}
+
+pub async fn logout(jar_private: PrivateCookieJar, jar: CookieJar) -> impl IntoResponse {
+    let cookie = Cookie::build("is_login").path("/").build();
+    let cookie_token = Cookie::build("token").path("/").build();
+    (
+        jar.remove(cookie),
+        jar_private.remove(cookie_token),
         StatusCode::OK,
     )
 }

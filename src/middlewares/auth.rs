@@ -3,10 +3,9 @@ use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
 use axum::{extract, Json};
 use axum_extra::extract::{CookieJar, PrivateCookieJar};
+use cookie::Cookie;
 use jsonwebtoken as jwt;
 use time::{OffsetDateTime, UtcOffset};
-
-const WHITELIST: [&str; 3] = ["/", "/health_check", "/api/v1/login"];
 
 #[derive(serde::Serialize)]
 struct ErrorRes {
@@ -19,28 +18,34 @@ pub async fn auth(
     request: extract::Request,
     next: Next,
 ) -> Result<Response, Response> {
-    let url = request.uri().path().to_string();
-    if WHITELIST.contains(&url.as_str()) {
-        println!("命中白名单");
-        let response = next.run(request).await;
-        return Ok(response);
-    }
-    let Some(session) = jar_private.get("session") else {
-        println!("cookies: {:?}", jar_private.get("session"));
-        return Err((
-            StatusCode::UNAUTHORIZED,
-            jar.remove("is_login"),
-            Json(ErrorRes {
-                code: 401,
-                msg: "未登录".to_string(),
-            }),
-        )
-            .into_response());
-    };
+    let token = jar_private
+        .get("token")
+        .ok_or_else(|| unauthorized_response(jar.clone(), jar_private.clone()))?;
+
+    Jwt::default()
+        .validate(token.value())
+        .map_err(|_| unauthorized_response(jar.clone(), jar_private.clone()))?;
     let response = next.run(request).await;
-    println!("cookies: {:?} {:?}", session, jar.get("is_login"));
     Ok(response)
 }
+// 生成未授权的响应
+fn unauthorized_response(jar: CookieJar, jar_private: PrivateCookieJar) -> Response {
+    let error_response = Json(ErrorRes {
+        code: 401,
+        msg: "未登录".to_string(),
+    });
+    // 带路径的cookie必须重新构建删除
+    let cookie = Cookie::build("is_login").path("/").build();
+    let cookie_token = Cookie::build("token").path("/").build();
+    (
+        StatusCode::UNAUTHORIZED,
+        jar.remove(cookie),
+        jar_private.remove(cookie_token),
+        error_response,
+    )
+        .into_response()
+}
+
 /// jwt
 ///
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
@@ -115,7 +120,7 @@ impl Default for Jwt {
         // 计算时区
         let offset_zone = UtcOffset::from_hms(8, 0, 0).unwrap();
         // 过期间隔
-        let offset_interval = UtcOffset::from_hms(0, 0, 10).unwrap();
+        let offset_interval = UtcOffset::from_hms(0, 10, 0).unwrap();
         // 加默认过期间隔
         let exp = utc_now
             .to_offset(offset_zone)

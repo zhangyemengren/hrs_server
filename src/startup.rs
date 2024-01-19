@@ -1,7 +1,8 @@
 use crate::configuration::{get_config, Configuration};
 use crate::middlewares::auth;
-use crate::routes::{catch_all, get_modules, get_user, health_check, login, root};
+use crate::routes::{catch_all, get_modules, get_user, health_check, login, logout, root};
 use axum::extract::{FromRef, MatchedPath};
+use axum::handler::HandlerWithoutStateExt;
 use axum::http::Request;
 use axum::middleware::{self};
 use axum::routing::get;
@@ -9,10 +10,11 @@ use axum::Router;
 use axum_extra::extract::cookie::Key;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use tower::ServiceBuilder;
-use tower_http::trace::TraceLayer;
+use tower_http::{services::ServeDir, trace::TraceLayer};
 use tracing::info_span;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+const COOKIE_SECRET: &[u8] = b"c7d46123b9a9cceac5ac32b3359fc02a22fcfdb30c7050c385609c9390110078277352e4a52aea1d17c6c6a75b42a0f1c8a86b2e812d1abf2cb4924c7d0e1f5e";
 /// 应用
 pub struct App {
     pub app: Router<()>,
@@ -92,23 +94,27 @@ impl App {
     // }
 
     pub async fn with_router(self) -> Self {
-        let api_v1 = Router::new()
-            .route("/login", get(login))
+        let api = Router::new()
             .route("/users", get(get_user))
             .route("/modules", get(get_modules));
-        let api = Router::new().nest("/v1", api_v1);
+        let api_without_auth = Router::new()
+            .route("/login", get(login))
+            .route("/logout", get(logout));
         let pool = self.get_pool().await;
         let state = AppState {
             pool,
-            cookie_key: Key::generate(),
+            cookie_key: Key::from(COOKIE_SECRET),
         };
+        let server_dir = ServeDir::new("assets").not_found_service(catch_all.into_service());
         let routers = Router::new()
+            .nest("/api", api)
+            .layer(ServiceBuilder::new().layer(middleware::from_fn_with_state(state.clone(), auth)))
             .route("/", get(root))
             .route("/health_check", get(health_check))
-            .nest("/api", api)
+            .nest("/api", api_without_auth)
+            .route("/*all", get(catch_all))
             .with_state(state.clone())
-            .layer(ServiceBuilder::new().layer(middleware::from_fn_with_state(state.clone(), auth)))
-            .route("/*all", get(catch_all));
+            .nest_service("/assets", server_dir);
         Self {
             app: routers,
             ..self
