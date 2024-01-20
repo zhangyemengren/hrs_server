@@ -34,7 +34,21 @@ pub async fn get_modules(State(AppState { pool, .. }): State<AppState>) -> impl 
     })
 }
 
-pub async fn login(jar_private: PrivateCookieJar, jar: CookieJar) -> impl IntoResponse {
+pub async fn login(
+    State(AppState { pool, .. }): State<AppState>,
+    jar_private: PrivateCookieJar,
+    jar: CookieJar,
+) -> impl IntoResponse {
+    let result = sqlx::query!(
+        "SELECT u.*
+FROM users u
+         JOIN user_credentials uc ON u.id = uc.user_id
+WHERE uc.username = 'admin' AND uc.password = 'admin';"
+    )
+    .fetch_all(&pool)
+    .await
+    .unwrap();
+    println!("{:?}", result);
     let duration = Duration::minutes(60);
     let token = Jwt::default().new_token().unwrap();
     let cookie_private = Cookie::build(("token", token))

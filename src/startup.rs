@@ -144,9 +144,3 @@ pub async fn spawn() -> Result<(), anyhow::Error> {
     });
     Ok(())
 }
-
-// async fn get_secret(jar: PrivateCookieJar) {
-//     if let Some(data) = jar.get("secret") {
-//         // ...
-//     }
-// }

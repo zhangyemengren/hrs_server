@@ -50,7 +50,7 @@ fn unauthorized_response(jar: CookieJar, jar_private: PrivateCookieJar) -> Respo
 ///
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Jwt {
-    secret: Vec<u8>,
+    secret: &'static [u8],
     claims: Claims,
 }
 
@@ -68,7 +68,7 @@ impl Jwt {
 
     pub fn new() -> Self {
         let claims = Claims::default();
-        let secret = Vec::new();
+        let secret = Self::COMMON_SECRET;
         Self { secret, claims }
     }
     pub fn aud(self, aud: &str) -> Self {
@@ -95,7 +95,7 @@ impl Jwt {
         let r = jwt::encode(
             &jwt::Header::default(),
             &self.claims,
-            &jwt::EncodingKey::from_secret(self.secret.as_slice()),
+            &jwt::EncodingKey::from_secret(self.secret),
         )?;
         Ok(r)
     }
@@ -105,7 +105,7 @@ impl Jwt {
         validation.sub = Some(self.claims.sub.to_owned());
         let r = jwt::decode::<Claims>(
             token,
-            &jwt::DecodingKey::from_secret(self.secret.as_slice()),
+            &jwt::DecodingKey::from_secret(self.secret),
             &validation,
         )?;
         Ok(r)
@@ -115,18 +115,11 @@ impl Jwt {
 impl Default for Jwt {
     fn default() -> Self {
         let mut j = Self::new();
-        j.secret = Self::COMMON_SECRET.to_vec();
+        j.secret = Self::COMMON_SECRET;
         let utc_now = OffsetDateTime::now_utc();
-        // 计算时区
-        let offset_zone = UtcOffset::from_hms(8, 0, 0).unwrap();
         // 过期间隔
         let offset_interval = UtcOffset::from_hms(0, 10, 0).unwrap();
-        // 加默认过期间隔
-        let exp = utc_now
-            .to_offset(offset_zone)
-            .to_offset(offset_interval)
-            .unix_timestamp()
-            + 1;
+        let exp = utc_now.to_offset(offset_interval).unix_timestamp();
 
         j.claims = Claims {
             aud: Self::COMMON_AUD.to_owned(),

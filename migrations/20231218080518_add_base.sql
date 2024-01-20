@@ -21,38 +21,15 @@ VALUES (1, 1, 'all'),
        (7, 7, 'all'),
        (8, 8, 'all');
 -- 角色表
--- 1.管理员 2.员工 3.HR 4.求职者
+-- 1.管理员 2.员工 3.求职者
 INSERT INTO roles (id, type)
 VALUES (1, 'admin'),
        (2, 'employee'),
-       (3, 'hr'),
-       (4, 'job_seeker');
+       (3, 'job_seeker');
 -- 权限表
 INSERT INTO permissions (role_id, module_id, sub_module_id)
-VALUES (1, 1, 1),
-       (1, 2, 2),
-       (1, 3, 3),
-       (1, 4, 4),
-       (1, 5, 5),
-       (1, 6, 6),
-       (1, 7, 7),
-       (1, 8, 8),
-       (2, 1, 1),
-       (2, 3, 3),
-       (2, 4, 4),
-       (2, 5, 5),
-       (2, 6, 6),
-       (2, 7, 7),
-       (2, 8, 8),
-       (3, 1, 1),
-       (3, 2, 2),
-       (3, 3, 3),
-       (3, 4, 4),
-       (3, 5, 5),
-       (3, 6, 6),
-       (3, 7, 7),
-       (3, 8, 8),
-       (4, 3, 1);
+VALUES (1, 1, 1);
+
 -- 职位表
 -- 1.前端工程师 2.后端工程师 3.UI设计师 4.产品经理 5.HR 6.运营 7.销售 8.市场 9.财务 10.客服 11.运维工程师 12.测试工程师
 INSERT INTO posts (id, type)
@@ -68,6 +45,21 @@ VALUES (1, 'font_end_engineer'),
        (10, 'customer_service'),
        (11, 'operation_and_maintenance_engineer'),
        (12, 'test_engineer');
+-- 职级表
+-- 1.初级 2.中级 3.高级 4.专家 5.组长 6.部门主管 7.高级部门主管 8.副总裁 9.总裁 10.区域总裁 11.CEO 12.董事长
+INSERT INTO post_rank (id, rank, rank_name)
+VALUES (1, 1, 'junior'),
+       (2, 2, 'mid_level'),
+       (3, 3, 'senior'),
+       (4, 4, 'expert'),
+       (5, 5, 'team_leader'),
+       (6, 6, 'department_head'),
+       (7, 7, 'senior_department_head'),
+       (8, 8, 'vice_president'),
+       (9, 9, 'president'),
+       (10, 10, 'regional_head'),
+       (11, 11, 'ceo'),
+       (12, 12, 'chairman');
 -- 公司表
 -- 1.总公司 2.集团 3.管理公司 4.骨干支持 5.战略资源 6.门店
 INSERT INTO companies (id, company_name)
