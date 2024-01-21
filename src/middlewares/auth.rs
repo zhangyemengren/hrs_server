@@ -134,7 +134,7 @@ impl Default for Jwt {
 mod tests {
     use super::*;
     #[test]
-    fn test_jwt() {
+    fn unit_test_jwt() {
         // 验证通过
         let j = Jwt::default();
         let token = j.new_token().unwrap();

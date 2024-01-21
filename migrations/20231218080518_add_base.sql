@@ -92,3 +92,6 @@ VALUES (1, 'R&D'),
        (6, 'Finance'),
        (7, 'Customer Service'),
        (8, 'Operation and Maintenance');
+-- 用户表插入数据
+INSERT INTO users (name, role) values ('admin', 1);
+INSERT INTO user_credentials (user_id, username, password) values (1, 'admin', 'admin');

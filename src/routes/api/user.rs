@@ -1,27 +1,11 @@
+use crate::response::GenericBody;
 use axum::Json;
-use serde_json::{json, Value};
+use axum::response::IntoResponse;
 
-pub async fn get_user() -> Json<Value> {
-    Json(json!({
-        "data":[
-            {
-                "id": 1,
-                "name": "John Doe",
-            },
-            {
-                "id": 2,
-                "name": "Miles Davis",
-            },
-        ],
-        "total": 2,
-    }))
-}
-
-pub async fn add_user() -> Json<Value> {
-    Json(json!({
-        "data": {
-            "id": 3,
-            "name": "John Coltrane",
-        },
-    }))
+pub async fn get_user() -> impl IntoResponse {
+    Json(GenericBody {
+        code: 200,
+        msg: "success".to_string(),
+        data: "hello".to_string()
+    })
 }

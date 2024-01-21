@@ -5,7 +5,7 @@ use axum::extract::{FromRef, MatchedPath};
 use axum::handler::HandlerWithoutStateExt;
 use axum::http::Request;
 use axum::middleware::{self};
-use axum::routing::get;
+use axum::routing::{get, post};
 use axum::Router;
 use axum_extra::extract::cookie::Key;
 use sqlx::{postgres::PgPoolOptions, PgPool};
@@ -98,7 +98,7 @@ impl App {
             .route("/users", get(get_user))
             .route("/modules", get(get_modules));
         let api_without_auth = Router::new()
-            .route("/login", get(login))
+            .route("/login", post(login))
             .route("/logout", get(logout));
         let pool = self.get_pool().await;
         let state = AppState {

@@ -5,16 +5,17 @@ use axum::response::IntoResponse;
 use axum::Json;
 use axum_extra::extract::{CookieJar, PrivateCookieJar};
 use cookie::{time::Duration, Cookie};
+use sqlx::PgPool;
 
 #[derive(serde::Serialize)]
-pub struct Module {
+struct Module {
     id: i32,
     module_type: String,
     icon_url: Option<String>,
 }
 
 #[derive(serde::Serialize)]
-pub struct ModuleResponse {
+struct ModuleResponse {
     total: usize,
     data: Vec<Module>,
 }
@@ -39,16 +40,8 @@ pub async fn login(
     jar_private: PrivateCookieJar,
     jar: CookieJar,
 ) -> impl IntoResponse {
-    let result = sqlx::query!(
-        "SELECT u.*
-FROM users u
-         JOIN user_credentials uc ON u.id = uc.user_id
-WHERE uc.username = 'admin' AND uc.password = 'admin';"
-    )
-    .fetch_all(&pool)
-    .await
-    .unwrap();
-    println!("{:?}", result);
+    let has_user = validate_password(&pool).await.unwrap();
+    println!("has_user: {}", has_user);
     let duration = Duration::minutes(60);
     let token = Jwt::default().new_token().unwrap();
     let cookie_private = Cookie::build(("token", token))
@@ -62,6 +55,22 @@ WHERE uc.username = 'admin' AND uc.password = 'admin';"
         jar.add(cookie),
         StatusCode::OK,
     )
+}
+
+async fn validate_password(pool: &PgPool) ->anyhow::Result<bool> {
+    let result = sqlx::query!(
+        "SELECT u.*
+FROM users u
+         JOIN user_credentials uc ON u.id = uc.user_id
+WHERE uc.username = 'admin' AND uc.password = 'admin';"
+    )
+        .fetch_all(pool)
+        .await?;
+    if result.len() == 0 {
+        return Ok(false);
+    }
+    println!("{:?}", result);
+    Ok(true)
 }
 
 pub async fn logout(jar_private: PrivateCookieJar, jar: CookieJar) -> impl IntoResponse {
