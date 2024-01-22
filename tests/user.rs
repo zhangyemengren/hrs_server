@@ -1,10 +1,11 @@
+mod helpers;
 use axum::body::{to_bytes, Body};
 use axum::http::{header, Request, StatusCode};
+use helpers::do_login;
+use hrs_server::response::GenericBody;
 use hrs_server::startup::App;
 use serde_json::{json, Value};
 use tower::ServiceExt;
-use hrs_server::helpers::do_login;
-use hrs_server::response::GenericBody;
 
 #[tokio::test]
 async fn test_get_user() {

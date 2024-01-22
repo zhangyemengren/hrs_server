@@ -1,8 +1,8 @@
+// 在tests文件夹中创建mod.rs文件不会添加到测试范围 用于编写一些测试辅助函数
 use axum::body::Body;
-use axum::http;
-use axum::http::{header, Request};
+use axum::http::{header, Method, Request};
+use hrs_server::startup::App;
 use tower::ServiceExt;
-use crate::startup::App;
 
 pub async fn do_login() -> String {
     let app = App::new().with_router().await.app;
@@ -10,10 +10,10 @@ pub async fn do_login() -> String {
     let response = app
         .oneshot(
             Request::builder()
-                .method(http::Method::POST)
+                .method(Method::POST)
                 .uri("/api/login")
-                .header(http::header::CONTENT_TYPE, "application/json")
-                .body(Body::empty())
+                .header(header::CONTENT_TYPE, "application/json")
+                .body(Body::from(r#"{"username":"admin","password":"admin"}"#))
                 .unwrap(),
         )
         .await

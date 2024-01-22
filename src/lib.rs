@@ -4,9 +4,10 @@
 
 pub mod configuration;
 pub mod middlewares;
+pub mod response;
 pub mod routes;
 pub mod startup;
-pub mod response;
-pub mod helpers;
+pub mod validator;
 
 pub use middlewares::Jwt;
+pub use validator::*;

@@ -1,4 +1,4 @@
-use crate::{startup::AppState, Jwt};
+use crate::{startup::AppState, Jwt, Validator};
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -35,12 +35,25 @@ pub async fn get_modules(State(AppState { pool, .. }): State<AppState>) -> impl 
     })
 }
 
+#[derive(Debug, serde::Deserialize)]
+pub struct LoginRequest {
+    username: String,
+    password: String,
+}
+
+impl Validator for LoginRequest {
+    fn validate(&self) -> Result<(), String> {
+        Ok(())
+    }
+}
+
 pub async fn login(
     State(AppState { pool, .. }): State<AppState>,
     jar_private: PrivateCookieJar,
     jar: CookieJar,
+    Json(login_request): Json<LoginRequest>,
 ) -> impl IntoResponse {
-    let has_user = validate_password(&pool).await.unwrap();
+    let has_user = validate_password(&pool, &login_request).await.unwrap();
     println!("has_user: {}", has_user);
     let duration = Duration::minutes(60);
     let token = Jwt::default().new_token().unwrap();
@@ -57,15 +70,22 @@ pub async fn login(
     )
 }
 
-async fn validate_password(pool: &PgPool) ->anyhow::Result<bool> {
+async fn validate_password(pool: &PgPool, payload: &LoginRequest) -> anyhow::Result<bool> {
+    let is_ok = payload.validate();
+    let is_username_not_empty = payload.str_not_empty(&payload.username);
+    let is_password_not_empty = payload.str_not_empty(&payload.password);
+    println!(
+        "is_ok: {:?} {:?} {:?}",
+        is_ok, is_username_not_empty, is_password_not_empty
+    );
     let result = sqlx::query!(
         "SELECT u.*
 FROM users u
          JOIN user_credentials uc ON u.id = uc.user_id
 WHERE uc.username = 'admin' AND uc.password = 'admin';"
     )
-        .fetch_all(pool)
-        .await?;
+    .fetch_all(pool)
+    .await?;
     if result.len() == 0 {
         return Ok(false);
     }
