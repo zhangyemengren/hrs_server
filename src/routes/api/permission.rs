@@ -4,8 +4,11 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
 use axum_extra::extract::{CookieJar, PrivateCookieJar};
-use cookie::{time::Duration, Cookie};
+use cookie::Cookie;
 use sqlx::PgPool;
+use std::error::Error;
+use std::fmt;
+use std::fmt::{Display, Formatter};
 
 #[derive(serde::Serialize)]
 struct Module {
@@ -40,9 +43,32 @@ pub struct LoginRequest {
     username: String,
     password: String,
 }
+#[derive(Debug)]
+pub enum LoginValidateError {
+    UsernameEmpty,
+    PasswordEmpty,
+}
+
+impl Display for LoginValidateError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            LoginValidateError::UsernameEmpty => write!(f, "Username cannot be empty"),
+            LoginValidateError::PasswordEmpty => write!(f, "Email cannot be empty"),
+        }
+    }
+}
+
+impl Error for LoginValidateError {}
 
 impl Validator for LoginRequest {
-    fn validate(&self) -> Result<(), String> {
+    type Failure = LoginValidateError;
+    fn validate(&self) -> Result<(), Self::Failure> {
+        if self.str_empty(&self.username) {
+            return Err(LoginValidateError::UsernameEmpty);
+        }
+        if self.str_empty(&self.password) {
+            return Err(LoginValidateError::PasswordEmpty);
+        }
         Ok(())
     }
 }
@@ -54,13 +80,11 @@ pub async fn login(
     Json(login_request): Json<LoginRequest>,
 ) -> impl IntoResponse {
     let has_user = validate_password(&pool, &login_request).await.unwrap();
-    println!("has_user: {}", has_user);
-    let duration = Duration::minutes(60);
+    println!("has_user: {:?}", has_user);
     let token = Jwt::default().new_token().unwrap();
     let cookie_private = Cookie::build(("token", token))
         .path("/")
         .http_only(true)
-        .max_age(duration)
         .build();
     let cookie = Cookie::build(("is_login", "1")).path("/").build();
     (
@@ -70,14 +94,9 @@ pub async fn login(
     )
 }
 
-async fn validate_password(pool: &PgPool, payload: &LoginRequest) -> anyhow::Result<bool> {
-    let is_ok = payload.validate();
-    let is_username_not_empty = payload.str_not_empty(&payload.username);
-    let is_password_not_empty = payload.str_not_empty(&payload.password);
-    println!(
-        "is_ok: {:?} {:?} {:?}",
-        is_ok, is_username_not_empty, is_password_not_empty
-    );
+async fn validate_password(pool: &PgPool, payload: &LoginRequest) -> anyhow::Result<()> {
+    payload.validate()?;
+
     let result = sqlx::query!(
         "SELECT u.*
 FROM users u
@@ -87,10 +106,10 @@ WHERE uc.username = 'admin' AND uc.password = 'admin';"
     .fetch_all(pool)
     .await?;
     if result.len() == 0 {
-        return Ok(false);
+        return Err(anyhow::anyhow!("xxxx"));
     }
     println!("{:?}", result);
-    Ok(true)
+    Ok(())
 }
 
 pub async fn logout(jar_private: PrivateCookieJar, jar: CookieJar) -> impl IntoResponse {

@@ -1,7 +1,8 @@
 pub trait Validator {
-    fn validate(&self) -> Result<(), String>;
+    type Failure;
+    fn validate(&self) -> Result<(), Self::Failure>;
 
-    fn str_not_empty(&self, value: &str) -> bool {
-        value.len() > 0
+    fn str_empty(&self, value: &str) -> bool {
+        value.len() == 0
     }
 }
