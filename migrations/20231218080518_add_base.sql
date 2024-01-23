@@ -93,5 +93,5 @@ VALUES (1, 'R&D'),
        (7, 'Customer Service'),
        (8, 'Operation and Maintenance');
 -- 用户表插入数据
-INSERT INTO users (name, role) values ('admin', 1);
-INSERT INTO user_credentials (user_id, username, password) values (1, 'admin', 'admin');
+INSERT INTO users (name, role) values ('admin', 1), ('bob', 2), ('david', 3);
+INSERT INTO user_credentials (user_id, username, password) values (1, 'admin', 'admin'), (2, 'bob@qq.com', 'qwer1234'), (3, 'david@gmail.com', 'abcABC123!');

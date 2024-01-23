@@ -95,7 +95,7 @@ pub async fn login(
     if let Err(e) = validate_result {
         return Json(GenericBody {
             status: Status::Fail(e.to_string()),
-            msg: e.to_string(),
+            msg: "".to_string(),
             data: (),
         })
         .into_response();

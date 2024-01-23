@@ -22,10 +22,13 @@ pub trait Validator {
         if value == "admin" {
             return true;
         }
-        static RE: Lazy<Regex> = Lazy::new(|| {
-            Regex::new(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$")
-                .unwrap()
-        });
-        RE.is_match(value)
+        // regex 不支持 前瞻（look-around）r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+        let has_lowercase = value.chars().any(|c| c.is_lowercase());
+        let has_uppercase = value.chars().any(|c| c.is_uppercase());
+        let has_digit = value.chars().any(|c| c.is_digit(10));
+        let has_special_char = value.chars().any(|c| "@$!%*?&".contains(c));
+        let is_at_least_8_chars = value.len() >= 8;
+
+        has_lowercase && has_uppercase && has_digit && has_special_char && is_at_least_8_chars
     }
 }
