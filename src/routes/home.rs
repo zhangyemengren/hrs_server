@@ -1,5 +1,6 @@
-use axum::http::StatusCode;
-use axum::response::Html;
+use crate::response::{GenericBody, Status};
+use axum::response::IntoResponse;
+use axum::{http::StatusCode, Json};
 
 pub async fn root() -> &'static str {
     "Hello, World!"
@@ -8,6 +9,13 @@ pub async fn health_check() -> StatusCode {
     StatusCode::OK
 }
 
-pub async fn catch_all() -> (StatusCode, Html<&'static str>) {
-    (StatusCode::NOT_FOUND, Html("<h1>404</h1>"))
+pub async fn catch_all() -> impl IntoResponse {
+    (
+        StatusCode::NOT_FOUND,
+        Json(GenericBody {
+            status: Status::HttpError,
+            msg: "Not Found".to_string(),
+            data: "".to_string(),
+        }),
+    )
 }

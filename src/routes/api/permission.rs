@@ -1,23 +1,24 @@
+use crate::response::{GenericBody, Status};
 use crate::{startup::AppState, Jwt, Validator};
 use axum::extract::State;
 use axum::http::StatusCode;
-use axum::response::IntoResponse;
+use axum::response::{IntoResponse, Response};
 use axum::Json;
 use axum_extra::extract::{CookieJar, PrivateCookieJar};
 use cookie::Cookie;
+use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::error::Error;
-use std::fmt;
-use std::fmt::{Display, Formatter};
+use std::fmt::{self, Display, Formatter};
 
-#[derive(serde::Serialize)]
+#[derive(Serialize)]
 struct Module {
     id: i32,
     module_type: String,
     icon_url: Option<String>,
 }
 
-#[derive(serde::Serialize)]
+#[derive(Serialize)]
 struct ModuleResponse {
     total: usize,
     data: Vec<Module>,
@@ -38,22 +39,28 @@ pub async fn get_modules(State(AppState { pool, .. }): State<AppState>) -> impl 
     })
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct LoginRequest {
     username: String,
     password: String,
 }
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub enum LoginValidateError {
     UsernameEmpty,
     PasswordEmpty,
+    UsernameOrPasswordError,
+    UsernameOrPasswordFormatError,
 }
 
 impl Display for LoginValidateError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            LoginValidateError::UsernameEmpty => write!(f, "Username cannot be empty"),
-            LoginValidateError::PasswordEmpty => write!(f, "Email cannot be empty"),
+            LoginValidateError::UsernameEmpty => write!(f, "UsernameEmpty"),
+            LoginValidateError::PasswordEmpty => write!(f, "PasswordEmpty"),
+            LoginValidateError::UsernameOrPasswordError => write!(f, "UsernameOrPasswordError"),
+            LoginValidateError::UsernameOrPasswordFormatError => {
+                write!(f, "UsernameOrPasswordFormatError")
+            }
         }
     }
 }
@@ -78,8 +85,17 @@ pub async fn login(
     jar_private: PrivateCookieJar,
     jar: CookieJar,
     Json(login_request): Json<LoginRequest>,
-) -> impl IntoResponse {
-    let has_user = validate_password(&pool, &login_request).await.unwrap();
+) -> Response {
+    let validate_result = validate_password(&pool, &login_request).await;
+    if let Err(e) = validate_result {
+        return Json(GenericBody {
+            status: Status::Fail(e.to_string()),
+            msg: e.to_string(),
+            data: (),
+        })
+        .into_response();
+    }
+    let has_user = validate_result.unwrap();
     println!("has_user: {:?}", has_user);
     let token = Jwt::default().new_token().unwrap();
     let cookie_private = Cookie::build(("token", token))
@@ -92,9 +108,13 @@ pub async fn login(
         jar.add(cookie),
         StatusCode::OK,
     )
+        .into_response()
 }
 
-async fn validate_password(pool: &PgPool, payload: &LoginRequest) -> anyhow::Result<()> {
+async fn validate_password(
+    pool: &PgPool,
+    payload: &LoginRequest,
+) -> Result<(), LoginValidateError> {
     payload.validate()?;
 
     let result = sqlx::query!(
@@ -104,9 +124,12 @@ FROM users u
 WHERE uc.username = 'admin' AND uc.password = 'admin';"
     )
     .fetch_all(pool)
-    .await?;
+    .await;
+    let Ok(result) = result else {
+        return Err(LoginValidateError::UsernameOrPasswordError);
+    };
     if result.len() == 0 {
-        return Err(anyhow::anyhow!("xxxx"));
+        return Err(LoginValidateError::UsernameOrPasswordError);
     }
     println!("{:?}", result);
     Ok(())

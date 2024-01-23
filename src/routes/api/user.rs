@@ -1,10 +1,10 @@
-use crate::response::GenericBody;
+use crate::response::{GenericBody, Status};
 use axum::response::IntoResponse;
 use axum::Json;
 
 pub async fn get_user() -> impl IntoResponse {
     Json(GenericBody {
-        code: 200,
+        status: Status::Success,
         msg: "success".to_string(),
         data: "hello".to_string(),
     })
