@@ -12,7 +12,7 @@ pub struct User {
     pub username: String,
     pub password: String,
 }
-pub async fn do_login(user: User) -> String {
+pub async fn do_login(user: User) -> (Response, String) {
     let app = App::new().with_router().await.app;
 
     let response = app
@@ -26,7 +26,8 @@ pub async fn do_login(user: User) -> String {
         )
         .await
         .unwrap();
-    get_cookie(&response)
+    let cookie = get_cookie(&response);
+    (response, cookie)
 }
 
 pub async fn do_admin_login() -> String {

@@ -76,6 +76,11 @@ impl Validator for LoginRequest {
         if self.str_empty(&self.password) {
             return Err(LoginValidateError::PasswordEmpty);
         }
+        if !self.username_reg_validate(&self.username)
+            || !self.password_reg_validate(&self.password)
+        {
+            return Err(LoginValidateError::UsernameOrPasswordFormatError);
+        }
         Ok(())
     }
 }
@@ -118,10 +123,11 @@ async fn validate_password(
     payload.validate()?;
 
     let result = sqlx::query!(
-        "SELECT u.*
-FROM users u
-         JOIN user_credentials uc ON u.id = uc.user_id
-WHERE uc.username = 'admin' AND uc.password = 'admin';"
+        "SELECT u.name FROM users u
+        JOIN user_credentials uc ON u.id = uc.user_id
+        WHERE uc.username = $1 AND uc.password = $2;",
+        payload.username,
+        payload.password
     )
     .fetch_all(pool)
     .await;

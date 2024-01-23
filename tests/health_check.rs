@@ -1,8 +1,7 @@
-use axum::body::{to_bytes, Body};
+use axum::body::{to_bytes, Body, Bytes};
 use axum::http::{Request, StatusCode};
 use hrs_server::response::{GenericBody, Status};
 use hrs_server::startup::{spawn, App};
-use serde_json::{json, Value};
 use sqlx::PgPool;
 use tower::ServiceExt;
 
@@ -74,12 +73,13 @@ async fn test_not_found() {
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
-    let body: Value = serde_json::from_slice(&body).expect("Failed to parse JSON");
-    let value = json!(GenericBody {
+    let value = serde_json::to_vec(&GenericBody {
         status: Status::HttpError,
         msg: "Not Found".to_string(),
         data: "".to_string(),
-    });
+    })
+    .unwrap();
+    let value = Bytes::from(value);
 
     assert_eq!(body, value);
 }
