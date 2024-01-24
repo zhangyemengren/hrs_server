@@ -1,5 +1,9 @@
-use crate::response::{GenericBody, Status};
-use crate::{startup::AppState, Jwt, Validator};
+use crate::{
+    auth::{Jwt, UserInfo},
+    response::{GenericBody, Status},
+    startup::AppState,
+    Validator,
+};
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
@@ -100,9 +104,9 @@ pub async fn login(
         })
         .into_response();
     }
-    let has_user = validate_result.unwrap();
-    println!("has_user: {:?}", has_user);
-    let token = Jwt::default().new_token().unwrap();
+    let user_info = validate_result.unwrap();
+    println!("user_info: {:?}", user_info);
+    let token = Jwt::default().user(user_info).new_token().unwrap();
     let cookie_private = Cookie::build(("token", token))
         .path("/")
         .http_only(true)
@@ -119,26 +123,23 @@ pub async fn login(
 async fn validate_password(
     pool: &PgPool,
     payload: &LoginRequest,
-) -> Result<(), LoginValidateError> {
+) -> Result<UserInfo, LoginValidateError> {
     payload.validate()?;
 
-    let result = sqlx::query!(
-        "SELECT u.name FROM users u
+    let user = sqlx::query_as!(
+        UserInfo,
+        "SELECT u.name, uc.user_id, uc.username FROM users u
         JOIN user_credentials uc ON u.id = uc.user_id
         WHERE uc.username = $1 AND uc.password = $2;",
         payload.username,
         payload.password
     )
-    .fetch_all(pool)
+    .fetch_one(pool)
     .await;
-    let Ok(result) = result else {
+    let Ok(user) = user else {
         return Err(LoginValidateError::UsernameOrPasswordError);
     };
-    if result.len() == 0 {
-        return Err(LoginValidateError::UsernameOrPasswordError);
-    }
-    println!("{:?}", result);
-    Ok(())
+    Ok(user)
 }
 
 pub async fn logout(jar_private: PrivateCookieJar, jar: CookieJar) -> impl IntoResponse {

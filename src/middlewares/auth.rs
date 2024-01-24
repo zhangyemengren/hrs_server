@@ -1,3 +1,4 @@
+use crate::response::{GenericBody, Status};
 use axum::http::StatusCode;
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
@@ -5,13 +6,9 @@ use axum::{extract, Json};
 use axum_extra::extract::{CookieJar, PrivateCookieJar};
 use cookie::Cookie;
 use jsonwebtoken as jwt;
+use serde::{Deserialize, Serialize};
 use time::{OffsetDateTime, UtcOffset};
 
-#[derive(serde::Serialize)]
-struct ErrorRes {
-    code: i32,
-    msg: String,
-}
 pub async fn auth(
     jar_private: PrivateCookieJar,
     jar: CookieJar,
@@ -22,17 +19,19 @@ pub async fn auth(
         .get("token")
         .ok_or_else(|| unauthorized_response(jar.clone(), jar_private.clone()))?;
 
-    Jwt::default()
+    let data = Jwt::default()
         .validate(token.value())
         .map_err(|_| unauthorized_response(jar.clone(), jar_private.clone()))?;
+    println!("token {:?}", data);
     let response = next.run(request).await;
     Ok(response)
 }
 // 生成未授权的响应
 fn unauthorized_response(jar: CookieJar, jar_private: PrivateCookieJar) -> Response {
-    let error_response = Json(ErrorRes {
-        code: 401,
-        msg: "未登录".to_string(),
+    let error_response = Json(GenericBody {
+        status: Status::HttpError,
+        msg: "Not Login".to_string(),
+        data: (),
     });
     // 带路径的cookie必须重新构建删除
     let cookie = Cookie::build("is_login").path("/").build();
@@ -48,17 +47,25 @@ fn unauthorized_response(jar: CookieJar, jar_private: PrivateCookieJar) -> Respo
 
 /// jwt
 ///
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Jwt {
     secret: &'static [u8],
     claims: Claims,
 }
 
-#[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Claims {
     aud: String,
     sub: String,
     exp: u64,
+    user: UserInfo,
+}
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct UserInfo {
+    pub name: Option<String>,
+    pub username: String,
+    pub user_id: i32,
 }
 
 impl Jwt {
@@ -88,6 +95,15 @@ impl Jwt {
     pub fn exp(self, exp: u64) -> Self {
         Self {
             claims: Claims { exp, ..self.claims },
+            ..self
+        }
+    }
+    pub fn user(self, user: UserInfo) -> Self {
+        Self {
+            claims: Claims {
+                user,
+                ..self.claims
+            },
             ..self
         }
     }
@@ -125,6 +141,7 @@ impl Default for Jwt {
             aud: Self::COMMON_AUD.to_owned(),
             sub: Self::COMMON_SUB.to_owned(),
             exp: exp as u64,
+            user: UserInfo::default(),
         };
         j
     }

@@ -1,5 +1,5 @@
 use crate::configuration::{get_config, Configuration};
-use crate::middlewares::auth;
+use crate::middlewares::auth::auth as authFn;
 use crate::routes::{catch_all, get_modules, get_user, health_check, login, logout, root};
 use axum::extract::{FromRef, MatchedPath};
 use axum::handler::HandlerWithoutStateExt;
@@ -108,7 +108,9 @@ impl App {
         let server_dir = ServeDir::new("assets").not_found_service(catch_all.into_service());
         let routers = Router::new()
             .nest("/api", api)
-            .layer(ServiceBuilder::new().layer(middleware::from_fn_with_state(state.clone(), auth)))
+            .layer(
+                ServiceBuilder::new().layer(middleware::from_fn_with_state(state.clone(), authFn)),
+            )
             .route("/", get(root))
             .route("/health_check", get(health_check))
             .nest("/api", api_without_auth)
