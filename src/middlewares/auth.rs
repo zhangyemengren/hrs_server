@@ -59,6 +59,12 @@ pub struct Claims {
     sub: String,
     exp: u64,
     user: UserInfo,
+    permission: Vec<Permission>,
+}
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct Permission {
+    pub module_id: i32,
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -66,6 +72,7 @@ pub struct UserInfo {
     pub name: Option<String>,
     pub username: String,
     pub user_id: i32,
+    pub role: i32,
 }
 
 impl Jwt {
@@ -107,6 +114,15 @@ impl Jwt {
             ..self
         }
     }
+    pub fn permission(self, permission: Vec<Permission>) -> Self {
+        Self {
+            claims: Claims {
+                permission,
+                ..self.claims
+            },
+            ..self
+        }
+    }
     pub fn new_token(&self) -> anyhow::Result<String> {
         let r = jwt::encode(
             &jwt::Header::default(),
@@ -142,6 +158,7 @@ impl Default for Jwt {
             sub: Self::COMMON_SUB.to_owned(),
             exp: exp as u64,
             user: UserInfo::default(),
+            permission: vec![],
         };
         j
     }

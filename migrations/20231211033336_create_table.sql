@@ -76,7 +76,7 @@ CREATE TABLE users
     company      integer,
     joining_date VARCHAR(255),
     department   integer,
-    role         integer,
+    role         integer NOT NULL ,
     FOREIGN KEY (superior) REFERENCES users (id),
     FOREIGN KEY (post) REFERENCES posts (id),
     FOREIGN KEY (post_rank) REFERENCES post_rank (id),

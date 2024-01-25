@@ -1,5 +1,5 @@
 use crate::{
-    auth::{Jwt, UserInfo},
+    auth::{Jwt, Permission, UserInfo},
     response::{GenericBody, Status},
     startup::AppState,
     Validator,
@@ -104,9 +104,13 @@ pub async fn login(
         })
         .into_response();
     }
-    let user_info = validate_result.unwrap();
-    println!("user_info: {:?}", user_info);
-    let token = Jwt::default().user(user_info).new_token().unwrap();
+    let data = validate_result.unwrap();
+    println!("data: {:?}", data);
+    let token = Jwt::default()
+        .user(data.0)
+        .permission(data.1)
+        .new_token()
+        .unwrap();
     let cookie_private = Cookie::build(("token", token))
         .path("/")
         .http_only(true)
@@ -123,23 +127,29 @@ pub async fn login(
 async fn validate_password(
     pool: &PgPool,
     payload: &LoginRequest,
-) -> Result<UserInfo, LoginValidateError> {
+) -> Result<(UserInfo, Vec<Permission>), LoginValidateError> {
     payload.validate()?;
 
     let user = sqlx::query_as!(
         UserInfo,
-        "SELECT u.name, uc.user_id, uc.username FROM users u
+        "SELECT u.name, u.role, uc.user_id, uc.username FROM users u
         JOIN user_credentials uc ON u.id = uc.user_id
         WHERE uc.username = $1 AND uc.password = $2;",
         payload.username,
         payload.password
     )
     .fetch_one(pool)
-    .await;
-    let Ok(user) = user else {
-        return Err(LoginValidateError::UsernameOrPasswordError);
-    };
-    Ok(user)
+    .await
+    .map_err(|_| LoginValidateError::UsernameOrPasswordError)?;
+    let permission = sqlx::query_as!(
+        Permission,
+        "SELECT module_id FROM permissions WHERE role_id = $1;",
+        &user.role
+    )
+    .fetch_all(pool)
+    .await
+    .map_err(|_| LoginValidateError::UsernameOrPasswordError)?;
+    Ok((user, permission))
 }
 
 pub async fn logout(jar_private: PrivateCookieJar, jar: CookieJar) -> impl IntoResponse {

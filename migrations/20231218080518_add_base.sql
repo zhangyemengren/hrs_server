@@ -28,7 +28,7 @@ VALUES (1, 'admin'),
        (3, 'job_seeker');
 -- 权限表
 INSERT INTO permissions (role_id, module_id, sub_module_id)
-VALUES (1, 1, 1);
+SELECT 1, id, 1 FROM modules;
 
 -- 职位表
 -- 1.前端工程师 2.后端工程师 3.UI设计师 4.产品经理 5.HR 6.运营 7.销售 8.市场 9.财务 10.客服 11.运维工程师 12.测试工程师
