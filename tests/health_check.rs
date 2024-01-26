@@ -1,9 +1,10 @@
-use axum::body::{to_bytes, Body, Bytes};
-use axum::http::{Request, StatusCode};
+pub mod helpers;
+use axum::body::{to_bytes, Bytes};
+use axum::http::StatusCode;
+use helpers::do_request;
 use hrs_server::response::{GenericBody, Status};
-use hrs_server::startup::{spawn, App};
+use hrs_server::startup::spawn;
 use sqlx::PgPool;
-use tower::ServiceExt;
 
 #[sqlx::test]
 async fn test_db_link() {
@@ -21,15 +22,7 @@ async fn test_db_link() {
 // 可以使用tower而不生成HTTP server:
 #[tokio::test]
 async fn test_root() {
-    let app = App::new().with_router().await.app;
-
-    // `Router` implements `tower::Service<Request<Body>>` so we can
-    // call it like any tower service, no need to run an HTTP server.
-    let response = app
-        .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
-        .await
-        .unwrap();
-
+    let response = do_request("/", "", None).await;
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
@@ -38,18 +31,7 @@ async fn test_root() {
 
 #[tokio::test]
 async fn test_health_check() {
-    let app = App::new().with_router().await.app;
-
-    let response = app
-        .oneshot(
-            Request::builder()
-                .uri("/health_check")
-                .body(Body::empty())
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-
+    let response = do_request("/health_check", "", None).await;
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
@@ -58,18 +40,7 @@ async fn test_health_check() {
 
 #[tokio::test]
 async fn test_not_found() {
-    let app = App::new().with_router().await.app;
-
-    let response = app
-        .oneshot(
-            Request::builder()
-                .uri("/not_found")
-                .body(Body::empty())
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-
+    let response = do_request("/not_found", "", None).await;
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();

@@ -1,5 +1,5 @@
 use crate::{
-    auth::{Jwt, Permission, UserInfo},
+    auth::{Claims, Jwt, Permission, UserInfo},
     response::{GenericBody, Status},
     startup::AppState,
     Validator,
@@ -7,7 +7,7 @@ use crate::{
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use axum::Json;
+use axum::{Extension, Json};
 use axum_extra::extract::{CookieJar, PrivateCookieJar};
 use cookie::Cookie;
 use serde::{Deserialize, Serialize};
@@ -15,28 +15,36 @@ use sqlx::PgPool;
 use std::error::Error;
 use std::fmt::{self, Display, Formatter};
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 struct Module {
     id: i32,
     module_type: String,
     icon_url: Option<String>,
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 struct ModuleResponse {
     total: usize,
     data: Vec<Module>,
 }
 
-pub async fn get_modules(State(AppState { pool, .. }): State<AppState>) -> impl IntoResponse {
+pub async fn get_modules(
+    Extension(claims): Extension<Claims>,
+    State(AppState { pool, .. }): State<AppState>,
+) -> impl IntoResponse {
+    let permission_list: Vec<_> = claims
+        .permission
+        .iter()
+        .map(|permission| permission.module_id)
+        .collect();
     let result = sqlx::query_as!(
         Module,
-        "SELECT id, type AS module_type, icon_url FROM modules ORDER BY id"
+        "SELECT id, type AS module_type, icon_url FROM modules WHERE id = ANY($1) ORDER BY id",
+        &permission_list
     )
     .fetch_all(&pool)
     .await
     .unwrap();
-
     Json(ModuleResponse {
         total: result.len(),
         data: result,
@@ -105,7 +113,7 @@ pub async fn login(
         .into_response();
     }
     let data = validate_result.unwrap();
-    println!("data: {:?}", data);
+    // println!("data: {:?}", data);
     let token = Jwt::default()
         .user(data.0)
         .permission(data.1)

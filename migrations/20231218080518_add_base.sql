@@ -29,6 +29,10 @@ VALUES (1, 'admin'),
 -- 权限表
 INSERT INTO permissions (role_id, module_id, sub_module_id)
 SELECT 1, id, 1 FROM modules;
+INSERT INTO permissions (role_id, module_id, sub_module_id)
+SELECT 2, id, 1 FROM modules WHERE id != 2;
+INSERT INTO permissions (role_id, module_id, sub_module_id)
+SELECT 3, id, 1 FROM modules WHERE id = 3;
 
 -- 职位表
 -- 1.前端工程师 2.后端工程师 3.UI设计师 4.产品经理 5.HR 6.运营 7.销售 8.市场 9.财务 10.客服 11.运维工程师 12.测试工程师
@@ -94,4 +98,4 @@ VALUES (1, 'R&D'),
        (8, 'Operation and Maintenance');
 -- 用户表插入数据
 INSERT INTO users (name, role) values ('admin', 1), ('bob', 2), ('david', 3);
-INSERT INTO user_credentials (user_id, username, password) values (1, 'admin', 'admin'), (2, 'bob@qq.com', 'qwer1234'), (3, 'david@gmail.com', 'abcABC123!');
+INSERT INTO user_credentials (user_id, username, password) values (1, 'admin', 'admin'), (2, 'bob@qq.com', 'Qwer1234!'), (3, 'david@gmail.com', 'abcABC123!');

@@ -12,7 +12,7 @@ use time::{OffsetDateTime, UtcOffset};
 pub async fn auth(
     jar_private: PrivateCookieJar,
     jar: CookieJar,
-    request: extract::Request,
+    mut request: extract::Request,
     next: Next,
 ) -> Result<Response, Response> {
     let token = jar_private
@@ -22,7 +22,8 @@ pub async fn auth(
     let data = Jwt::default()
         .validate(token.value())
         .map_err(|_| unauthorized_response(jar.clone(), jar_private.clone()))?;
-    println!("token {:?}", data);
+    // 修改extensions提取器值
+    request.extensions_mut().insert(data.claims);
     let response = next.run(request).await;
     Ok(response)
 }
@@ -49,30 +50,30 @@ fn unauthorized_response(jar: CookieJar, jar_private: PrivateCookieJar) -> Respo
 ///
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Jwt {
-    secret: &'static [u8],
-    claims: Claims,
+    pub(crate) secret: &'static [u8],
+    pub(crate) claims: Claims,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Claims {
-    aud: String,
-    sub: String,
-    exp: u64,
-    user: UserInfo,
-    permission: Vec<Permission>,
+    pub(crate) aud: String,
+    pub(crate) sub: String,
+    pub(crate) exp: u64,
+    pub(crate) user: UserInfo,
+    pub(crate) permission: Vec<Permission>,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Permission {
-    pub module_id: i32,
+    pub(crate) module_id: i32,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct UserInfo {
-    pub name: Option<String>,
-    pub username: String,
-    pub user_id: i32,
-    pub role: i32,
+    pub(crate) name: Option<String>,
+    pub(crate) username: String,
+    pub(crate) user_id: i32,
+    pub(crate) role: i32,
 }
 
 impl Jwt {

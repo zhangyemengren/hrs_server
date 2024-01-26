@@ -62,3 +62,17 @@ fn get_cookie(response: &Response) -> String {
         .to_string();
     cookie
 }
+
+pub async fn do_request(uri: &str, cookie: &str, body: Option<Body>) -> Response {
+    let body = body.unwrap_or(Body::empty());
+    let app = App::new().with_router().await.app;
+    app.oneshot(
+        Request::builder()
+            .uri(uri)
+            .header(header::COOKIE, cookie)
+            .body(body)
+            .unwrap(),
+    )
+    .await
+    .unwrap()
+}
