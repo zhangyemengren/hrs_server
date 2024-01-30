@@ -1,5 +1,6 @@
 - [业务架构图](#业务架构图)
 - [运行命令](#运行命令)
+- [服务器部署](#服务器部署)
 - [项目结构](#项目结构)
 - [环境变量](#环境变量)
 - [技术选型](#技术选型)
@@ -27,12 +28,10 @@
 - sqlx migrate run
 
 ## 本地运行服务
+release模式 + prod环境
 - ENV_TYPE=prod cargo run --release
-## 服务器运行服务
-- ENV_TYPE=prod cargo build --release 
-- sudo systemctl daemon-reload
-- sudo systemctl enable hrs_app
-- sudo systemctl start hrs_app
+dev模式 + dev环境
+- cargo run
 
 ## 执行测试
 - cargo test
@@ -50,6 +49,66 @@ cargo +nightly -Zscript print_test.rs --config /path
 
 ## 生成文档
 - cargo doc --no-deps --open
+
+# 服务器部署
+## 目前没有自动化部署流程 手动执行以下步骤
+服务器中执行(ubuntu 22 LTS) root用户 hrs项目路径执行
+- 拉取代码
+```run
+git clone https://github.com/zhangyemengren/hrs_web.git
+```
+
+- 安装docker
+```run
+# Add Docker's official GPG key:
+sudo apt-get update
+sudo apt-get install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+```
+
+- 验证 docker
+```run
+sudo docker run hello-world
+```
+
+- 安装rust
+```run
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+- 安装rust nightly
+```run
+rustup install nightly
+```
+
+- 执行初始化脚本
+```run
+cargo +nightly -Zscript ./script/init.rs
+```
+
+- 编译项目(线上环境变量在systemd配置文件中)
+```run
+cargo build --release
+```
+
+- systemd 可以按需修改hrs_app.service配置
+```run
+cp hrs_app.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable hrs_app
+sudo systemctl start hrs_app
+```
 
 # 项目结构
 ```text
