@@ -1,0 +1,13 @@
+[Unit]
+Description=Hrs Rust Application
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/home/projects/hrs_server/target/release/hrs_server
+User=root
+Group=root
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

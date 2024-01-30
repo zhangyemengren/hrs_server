@@ -26,8 +26,13 @@
 - sqlx database create
 - sqlx migrate run
 
-## 运行服务
-- cargo run
+## 本地运行服务
+- ENV_TYPE=prod cargo run --release
+## 服务器运行服务
+- ENV_TYPE=prod cargo build --release 
+- sudo systemctl daemon-reload
+- sudo systemctl enable hrs_app
+- sudo systemctl start hrs_app
 
 ## 执行测试
 - cargo test
@@ -53,6 +58,7 @@ cargo +nightly -Zscript print_test.rs --config /path
 ├── .env # sqlx编译时验证必须
 ├── Cargo.lock
 ├── Cargo.toml
+├── hrs_app.service # systemd配置文件
 ├── LICENSE
 ├── README.md
 ├── assets # 资源文件
