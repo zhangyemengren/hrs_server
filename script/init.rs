@@ -36,19 +36,11 @@ fn main() {
                 println!("sqlx-cli is already installed.");
             } else {
                 // 如果 sqlx-cli 没有安装，安装它
-                println!("Installing sqlx-cli...");
-                let install_sqlx = Command::new("cargo")
-                    .args(&["install", "sqlx-cli", "--no-default-features", "--features", "postgres"])
-                    .status()
-                    .expect("Failed to install sqlx-cli");
-
-                if !install_sqlx.success() {
-                    panic!("Failed to install sqlx-cli");
-                }
+                install_sqlx_cli();
             }
         }
         Err(_) => {
-            println!("Failed to check if sqlx-cli is installed.");
+            install_sqlx_cli();
         }
     }
 
@@ -64,4 +56,16 @@ fn main() {
         .arg("run")
         .status()
         .expect("Failed to run migrations");
+}
+
+fn install_sqlx_cli() {
+    println!("Installing sqlx-cli...");
+    let install_sqlx = Command::new("cargo")
+        .args(&["install", "sqlx-cli", "--no-default-features", "--features", "postgres"])
+        .status()
+        .expect("Failed to install sqlx-cli");
+
+    if !install_sqlx.success() {
+        panic!("Failed to install sqlx-cli");
+    }
 }
