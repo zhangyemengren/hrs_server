@@ -3,14 +3,14 @@ use crate::middlewares::auth::auth as authFn;
 use crate::routes::{catch_all, get_modules, get_user, health_check, login, logout, root};
 use axum::extract::{FromRef, MatchedPath};
 use axum::handler::HandlerWithoutStateExt;
-use axum::http::Request;
+use axum::http::{header, Method, Request};
 use axum::middleware::{self};
 use axum::routing::{get, post};
 use axum::Router;
 use axum_extra::extract::cookie::Key;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use tower::ServiceBuilder;
-use tower_http::{services::ServeDir, trace::TraceLayer};
+use tower_http::{cors::CorsLayer, services::ServeDir, trace::TraceLayer};
 use tracing::info_span;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -106,6 +106,15 @@ impl App {
             cookie_key: Key::from(COOKIE_SECRET),
         };
         let server_dir = ServeDir::new("assets").not_found_service(catch_all.into_service());
+        let cors = CorsLayer::new()
+            .allow_methods([Method::GET, Method::POST])
+            .allow_headers([header::CONTENT_TYPE])
+            .allow_origin([
+                "http://localhost:3000".parse().unwrap(),
+                "http://127.0.0.1:3000".parse().unwrap(),
+                "https://hrs-web-gamma.vercel.app".parse().unwrap(),
+            ])
+            .allow_credentials(true);
         let routers = Router::new()
             .nest("/api", api)
             .layer(
@@ -116,7 +125,8 @@ impl App {
             .nest("/api", api_without_auth)
             .route("/*all", get(catch_all))
             .with_state(state.clone())
-            .nest_service("/assets", server_dir);
+            .nest_service("/assets", server_dir)
+            .layer(ServiceBuilder::new().layer(cors));
         Self {
             app: routers,
             ..self

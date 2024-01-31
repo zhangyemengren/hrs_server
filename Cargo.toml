@@ -20,7 +20,7 @@ sqlx = { version = "0.7", default-features = false, features = ["runtime-tokio",
     "chrono",
     "migrate", ] }
 tower = { version = "0.4", features = ["util"] }
-tower-http = { version = "0.5", features = ["trace", "fs"] }
+tower-http = { version = "0.5", features = ["trace", "fs", "cors"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 config = {version = "0.13", default-features = false, features = ["toml"]}
