@@ -112,6 +112,7 @@ impl App {
             .allow_origin([
                 "http://localhost:3000".parse().unwrap(),
                 "http://127.0.0.1:3000".parse().unwrap(),
+                "https://astro-web-nu.vercel.app".parse().unwrap(),
             ])
             .allow_credentials(true);
         let routers = Router::new()
