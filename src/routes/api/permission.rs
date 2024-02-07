@@ -127,7 +127,11 @@ pub async fn login(
     (
         jar_private.add(cookie_private),
         jar.add(cookie),
-        StatusCode::OK,
+        Json(GenericBody {
+            status: Status::Success,
+            msg: "success".to_string(),
+            data: (),
+        }),
     )
         .into_response()
 }
