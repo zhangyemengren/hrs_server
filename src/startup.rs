@@ -94,7 +94,7 @@ impl App {
         let server_dir = ServeDir::new("assets").not_found_service(catch_all.into_service());
         let cors = CorsLayer::new()
             .allow_methods([Method::GET, Method::POST])
-            .allow_headers([header::CONTENT_TYPE])
+            .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION])
             .allow_origin([
                 "http://localhost:3000".parse().unwrap(),
                 "http://127.0.0.1:3000".parse().unwrap(),
