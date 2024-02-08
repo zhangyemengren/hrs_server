@@ -1,20 +1,18 @@
 use crate::configuration::{get_config, Configuration};
 use crate::middlewares::auth::auth as authFn;
-use crate::routes::{catch_all, get_modules, get_user, health_check, login, logout, root};
-use axum::extract::{FromRef, MatchedPath};
+use crate::routes::{catch_all, get_modules, get_user, health_check, login, root};
+use axum::extract::MatchedPath;
 use axum::handler::HandlerWithoutStateExt;
 use axum::http::{header, Method, Request};
 use axum::middleware::{self};
 use axum::routing::{get, post};
 use axum::Router;
-use axum_extra::extract::cookie::Key;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use tower::ServiceBuilder;
 use tower_http::{cors::CorsLayer, services::ServeDir, trace::TraceLayer};
 use tracing::info_span;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-const COOKIE_SECRET: &[u8] = b"c7d46123b9a9cceac5ac32b3359fc02a22fcfdb30c7050c385609c9390110078277352e4a52aea1d17c6c6a75b42a0f1c8a86b2e812d1abf2cb4924c7d0e1f5e";
 /// 应用
 pub struct App {
     pub app: Router<()>,
@@ -24,13 +22,6 @@ pub struct App {
 #[derive(Clone)]
 pub struct AppState {
     pub pool: PgPool,
-    pub cookie_key: Key,
-}
-
-impl FromRef<AppState> for Key {
-    fn from_ref(state: &AppState) -> Self {
-        state.cookie_key.clone()
-    }
 }
 
 impl App {
@@ -97,14 +88,9 @@ impl App {
         let api = Router::new()
             .route("/users", get(get_user))
             .route("/modules", get(get_modules));
-        let api_without_auth = Router::new()
-            .route("/login", post(login))
-            .route("/logout", get(logout));
+        let api_without_auth = Router::new().route("/login", post(login));
         let pool = self.get_pool().await;
-        let state = AppState {
-            pool,
-            cookie_key: Key::from(COOKIE_SECRET),
-        };
+        let state = AppState { pool };
         let server_dir = ServeDir::new("assets").not_found_service(catch_all.into_service());
         let cors = CorsLayer::new()
             .allow_methods([Method::GET, Method::POST])

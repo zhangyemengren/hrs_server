@@ -5,11 +5,8 @@ use crate::{
     Validator,
 };
 use axum::extract::State;
-use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::{Extension, Json};
-use axum_extra::extract::{CookieJar, PrivateCookieJar};
-use cookie::Cookie;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::error::Error;
@@ -99,8 +96,6 @@ impl Validator for LoginRequest {
 
 pub async fn login(
     State(AppState { pool, .. }): State<AppState>,
-    jar_private: PrivateCookieJar,
-    jar: CookieJar,
     Json(login_request): Json<LoginRequest>,
 ) -> Response {
     let validate_result = validate_password(&pool, &login_request).await;
@@ -119,20 +114,12 @@ pub async fn login(
         .permission(data.1)
         .new_token()
         .unwrap();
-    let cookie_private = Cookie::build(("token", token))
-        .path("/")
-        .http_only(true)
-        .build();
-    let cookie = Cookie::build(("is_login", "1")).path("/").build();
-    (
-        jar_private.add(cookie_private),
-        jar.add(cookie),
-        Json(GenericBody {
-            status: Status::Success,
-            msg: "success".to_string(),
-            data: (),
-        }),
-    )
+
+    (Json(GenericBody {
+        status: Status::Success,
+        msg: "success".to_string(),
+        data: token,
+    }),)
         .into_response()
 }
 
@@ -162,14 +149,4 @@ async fn validate_password(
     .await
     .map_err(|_| LoginValidateError::UsernameOrPasswordError)?;
     Ok((user, permission))
-}
-
-pub async fn logout(jar_private: PrivateCookieJar, jar: CookieJar) -> impl IntoResponse {
-    let cookie = Cookie::build("is_login").path("/").build();
-    let cookie_token = Cookie::build("token").path("/").build();
-    (
-        jar.remove(cookie),
-        jar_private.remove(cookie_token),
-        StatusCode::OK,
-    )
 }

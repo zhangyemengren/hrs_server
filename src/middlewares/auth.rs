@@ -1,49 +1,40 @@
 use crate::response::{GenericBody, Status};
-use axum::http::StatusCode;
+use axum::http::{HeaderMap, StatusCode};
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
 use axum::{extract, Json};
-use axum_extra::extract::{CookieJar, PrivateCookieJar};
-use cookie::Cookie;
 use jsonwebtoken as jwt;
 use serde::{Deserialize, Serialize};
 use time::{OffsetDateTime, UtcOffset};
 
 pub async fn auth(
-    jar_private: PrivateCookieJar,
-    jar: CookieJar,
+    headers: HeaderMap,
     mut request: extract::Request,
     next: Next,
 ) -> Result<Response, Response> {
-    let token = jar_private
-        .get("token")
-        .ok_or_else(|| unauthorized_response(jar.clone(), jar_private.clone()))?;
+    let token = headers
+        .get("Authorization")
+        .ok_or_else(|| unauthorized_response())?
+        .to_str()
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR.into_response())?;
 
     let data = Jwt::default()
-        .validate(token.value())
-        .map_err(|_| unauthorized_response(jar.clone(), jar_private.clone()))?;
+        .validate(token)
+        .map_err(|_| unauthorized_response())?;
     // 修改extensions提取器值
     request.extensions_mut().insert(data.claims);
     let response = next.run(request).await;
     Ok(response)
 }
 // 生成未授权的响应
-fn unauthorized_response(jar: CookieJar, jar_private: PrivateCookieJar) -> Response {
+fn unauthorized_response() -> Response {
     let error_response = Json(GenericBody {
         status: Status::HttpError,
         msg: "Not Login".to_string(),
         data: (),
     });
-    // 带路径的cookie必须重新构建删除
-    let cookie = Cookie::build("is_login").path("/").build();
-    let cookie_token = Cookie::build("token").path("/").build();
-    (
-        StatusCode::UNAUTHORIZED,
-        jar.remove(cookie),
-        jar_private.remove(cookie_token),
-        error_response,
-    )
-        .into_response()
+
+    (StatusCode::UNAUTHORIZED, error_response).into_response()
 }
 
 /// jwt

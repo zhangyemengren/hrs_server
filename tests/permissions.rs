@@ -4,14 +4,15 @@
 pub mod helpers;
 use axum::body::{to_bytes, Bytes};
 use axum::http::StatusCode;
-use helpers::{do_admin_login, do_login, do_request, User};
+use helpers::{do_admin_login, do_login, do_request, get_string, User};
 use hrs_server::response::{GenericBody, Status};
 use serde_json::{from_slice, Value};
 
 #[tokio::test]
 async fn test_get_user() {
-    let cookie = do_admin_login().await;
-    let response = do_request("/api/users", &cookie, None).await;
+    let response = do_admin_login().await;
+    let token = get_string(response, "data").await;
+    let response = do_request("/api/users", &token, None).await;
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
@@ -28,14 +29,15 @@ async fn test_get_user() {
 #[tokio::test]
 async fn test_login() {
     // 成功
-    let (_, cookie) = do_login(User {
+    let response = do_login(User {
         username: "admin".to_string(),
         password: "admin".to_string(),
     })
     .await;
-    assert!(cookie.len() > 0);
+    let token = get_string(response, "data").await;
+    assert!(token.len() > 0);
     // UsernameEmpty
-    let (response, _) = do_login(User {
+    let response = do_login(User {
         username: "".to_string(),
         password: "admin".to_string(),
     })
@@ -50,7 +52,7 @@ async fn test_login() {
     let value = Bytes::from(value);
     assert_eq!(body, value);
     // PasswordEmpty
-    let (response, _) = do_login(User {
+    let response = do_login(User {
         username: "admin".to_string(),
         password: "".to_string(),
     })
@@ -65,7 +67,7 @@ async fn test_login() {
     let value = Bytes::from(value);
     assert_eq!(body, value);
     // UsernameOrPasswordFormatError
-    let (response, _) = do_login(User {
+    let response = do_login(User {
         username: "ab".to_string(),
         password: "123".to_string(),
     })
@@ -80,7 +82,7 @@ async fn test_login() {
     let value = Bytes::from(value);
     assert_eq!(body, value);
     // UsernameOrPasswordError
-    let (response, _) = do_login(User {
+    let response = do_login(User {
         username: "bob@123.com".to_string(),
         password: "123xvbM!".to_string(),
     })
@@ -99,31 +101,34 @@ async fn test_login() {
 #[tokio::test]
 async fn test_get_modules() {
     // admin
-    let cookie = do_admin_login().await;
-    let response = do_request("/api/modules", &cookie, None).await;
+    let response = do_admin_login().await;
+    let token = get_string(response, "data").await;
+    let response = do_request("/api/modules", &token, None).await;
     assert_eq!(response.status(), StatusCode::OK);
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let json: Value = from_slice(&body).unwrap();
     let len = json.get("data").unwrap().as_array().unwrap().len();
     assert_eq!(len, 8);
     //  员工
-    let (_, cookie) = do_login(User {
+    let response = do_login(User {
         username: "bob@qq.com".to_string(),
         password: "Qwer1234!".to_string(),
     })
     .await;
-    let response = do_request("/api/modules", &cookie, None).await;
+    let token = get_string(response, "data").await;
+    let response = do_request("/api/modules", &token, None).await;
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let json: Value = from_slice(&body).unwrap();
     let len = json.get("data").unwrap().as_array().unwrap().len();
     assert_eq!(len, 7);
     // 求职者
-    let (_, cookie) = do_login(User {
+    let response = do_login(User {
         username: "david@gmail.com".to_string(),
         password: "abcABC123!".to_string(),
     })
     .await;
-    let response = do_request("/api/modules", &cookie, None).await;
+    let token = get_string(response, "data").await;
+    let response = do_request("/api/modules", &token, None).await;
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let json: Value = from_slice(&body).unwrap();
     let len = json.get("data").unwrap().as_array().unwrap().len();
