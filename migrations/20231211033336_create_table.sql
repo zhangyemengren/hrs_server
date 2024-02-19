@@ -77,11 +77,13 @@ CREATE TABLE users
     joining_date VARCHAR(255),
     department   integer,
     role         integer NOT NULL ,
+    store       integer,
     FOREIGN KEY (superior) REFERENCES users (id),
     FOREIGN KEY (post) REFERENCES posts (id),
     FOREIGN KEY (post_rank) REFERENCES post_rank (id),
     FOREIGN KEY (company) REFERENCES companies (id),
     FOREIGN KEY (department) REFERENCES departments (id),
+    FOREIGN KEY (store) REFERENCES stores (id),
     FOREIGN KEY (role) REFERENCES roles (id)
 );
 

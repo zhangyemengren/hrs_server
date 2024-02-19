@@ -28,14 +28,20 @@ VALUES (1, 'admin'),
        (3, 'job_seeker');
 -- 权限表
 INSERT INTO permissions (role_id, module_id, sub_module_id)
-SELECT 1, id, 1 FROM modules;
+SELECT 1, id, 1
+FROM modules;
 INSERT INTO permissions (role_id, module_id, sub_module_id)
-SELECT 2, id, 1 FROM modules WHERE id != 2;
+SELECT 2, id, 1
+FROM modules
+WHERE id != 2;
 INSERT INTO permissions (role_id, module_id, sub_module_id)
-SELECT 3, id, 1 FROM modules WHERE id = 3;
+SELECT 3, id, 1
+FROM modules
+WHERE id = 3;
 
 -- 职位表
 -- 1.前端工程师 2.后端工程师 3.UI设计师 4.产品经理 5.HR 6.运营 7.销售 8.市场 9.财务 10.客服 11.运维工程师 12.测试工程师
+-- 13.服务员 14.传菜员 15.厨师 16.收银员 17.采购员 18.仓管员 19.大堂经理 20.店长
 INSERT INTO posts (id, type)
 VALUES (1, 'font_end_engineer'),
        (2, 'back_end_engineer'),
@@ -48,7 +54,15 @@ VALUES (1, 'font_end_engineer'),
        (9, 'finance'),
        (10, 'customer_service'),
        (11, 'operation_and_maintenance_engineer'),
-       (12, 'test_engineer');
+       (12, 'test_engineer'),
+       (13, 'waiter'),
+       (14, 'dish_collector'),
+       (15, 'chef'),
+       (16, 'cashier'),
+       (17, 'purchaser'),
+       (18, 'warehouse_keeper'),
+       (19, 'restaurant_manager'),
+       (20, 'store_manager');
 -- 职级表
 -- 1.初级 2.中级 3.高级 4.专家 5.组长 6.部门主管 7.高级部门主管 8.副总裁 9.总裁 10.区域总裁 11.CEO 12.董事长
 INSERT INTO post_rank (id, rank, rank_name)
@@ -86,7 +100,7 @@ VALUES (1, 'Gather ''n Simmer Wangfujing'),
        (9, 'Gather ''n Simmer Shichahai'),
        (10, 'Gather ''n Simmer Yizhuang');
 -- 部门表
--- 1.研发部 2.HR部 3.运营部 4.销售部 5.市场部 6.财务部 7.客服部 8.运维部
+-- 1.研发部 2.HR部 3.运营部 4.销售部 5.市场部 6.财务部 7.客服部 8.运维部 9.门店
 INSERT INTO departments (id, department_name)
 VALUES (1, 'R&D'),
        (2, 'HR'),
@@ -95,7 +109,14 @@ VALUES (1, 'R&D'),
        (5, 'Marketing'),
        (6, 'Finance'),
        (7, 'Customer Service'),
-       (8, 'Operation and Maintenance');
--- 用户表插入数据
-INSERT INTO users (name, role) values ('admin', 1), ('bob', 2), ('david', 3);
-INSERT INTO user_credentials (user_id, username, password) values (1, 'admin', 'admin'), (2, 'bob@qq.com', 'Qwer1234!'), (3, 'david@gmail.com', 'abcABC123!');
+       (8, 'Operation and Maintenance'),
+       (9, 'Store');
+-- 用户表插入数据(登录账号)
+INSERT INTO users (name, role)
+values ('admin', 1),
+       ('bob', 2),
+       ('david', 3);
+INSERT INTO user_credentials (user_id, username, password)
+values (1, 'admin', 'admin'),
+       (2, 'bob@qq.com', 'Qwer1234!'),
+       (3, 'david@gmail.com', 'abcABC123!');
