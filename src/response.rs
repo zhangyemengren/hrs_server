@@ -42,9 +42,10 @@ pub enum ApiError {
 
 impl IntoResponse for ApiError {
     fn into_response(self) -> axum::response::Response {
-        let payload = json!({
-            "message": "参数错误".to_string(),
-            "origin": "with_rejection"
+        let payload = json!(GenericBody {
+            status: Status::Fail("参数错误".to_string()),
+            msg: "参数错误".to_string(),
+            data: (),
         });
         let code = match self {
             ApiError::JsonExtractorRejection(x) => match x {

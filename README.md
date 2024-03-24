@@ -47,6 +47,11 @@ example: 执行print_test.rs
 cargo +nightly -Zscript print_test.rs --config /path
 ```
 
+## 格式化 用到了unstable功能 imports_granularity = "Crate"
+```run
+cargo +nightly fmt
+```
+
 ## 生成文档
 - cargo doc --no-deps --open
 

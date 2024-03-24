@@ -8,7 +8,7 @@ use axum::{
 };
 use jsonwebtoken as jwt;
 use serde::{Deserialize, Serialize};
-use time::{OffsetDateTime, UtcOffset};
+use time::{Duration, OffsetDateTime};
 
 pub async fn auth(
     headers: HeaderMap,
@@ -145,8 +145,8 @@ impl Default for Jwt {
         j.secret = Self::COMMON_SECRET;
         let utc_now = OffsetDateTime::now_utc();
         // 过期间隔
-        let offset_interval = UtcOffset::from_hms(0, 10, 0).unwrap();
-        let exp = utc_now.to_offset(offset_interval).unix_timestamp();
+        let added_duration = Duration::minutes(30);
+        let exp = (utc_now + added_duration).unix_timestamp();
 
         j.claims = Claims {
             aud: Self::COMMON_AUD.to_owned(),
