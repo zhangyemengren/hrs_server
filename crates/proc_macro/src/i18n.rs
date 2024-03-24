@@ -1,9 +1,6 @@
 use quote::quote;
 use serde_json::Value;
-use std::collections::HashMap;
-use std::fs;
-use std::fs::ReadDir;
-use std::path::PathBuf;
+use std::{collections::HashMap, fs, fs::ReadDir, path::PathBuf};
 use syn::{parse::Parse, LitStr};
 
 pub struct Args {

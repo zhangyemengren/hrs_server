@@ -1,15 +1,15 @@
 -- 用于添加一些固定的数据 如模块等
 -- 模块表
 -- 1.信息 2.权限 3.招聘 4.薪资 5.账户 6.绩效 7.考勤 8.消息
-INSERT INTO modules (id, type, icon_url)
-VALUES (1, 'information', '/assets/modules/information.png'),
-       (2, 'permission', '/assets/modules/permission.png'),
-       (3, 'recruitment', '/assets/modules/recruitment.png'),
-       (4, 'salary', '/assets/modules/salary.png'),
-       (5, 'account', '/assets/modules/account.png'),
-       (6, 'performance', '/assets/modules/performance.png'),
-       (7, 'attendance', '/assets/modules/attendance.png'),
-       (8, 'message', '/assets/modules/message.png');
+INSERT INTO modules (id, type)
+VALUES (1, 'information'),
+       (2, 'permission'),
+       (3, 'recruitment'),
+       (4, 'salary'),
+       (5, 'account'),
+       (6, 'performance'),
+       (7, 'attendance'),
+       (8, 'message');
 -- 子模块表
 INSERT INTO sub_modules (id, module_id, type)
 VALUES (1, 1, 'all'),

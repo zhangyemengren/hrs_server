@@ -1,0 +1,3 @@
+# 使用 carcargo +nightly fmt 应用imports_granularity
+unstable_features = true
+imports_granularity = "Crate"

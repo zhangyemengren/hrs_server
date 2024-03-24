@@ -1,5 +1,7 @@
-use serde::ser::Serializer;
-use serde::Serialize;
+use axum::{extract::rejection::JsonRejection, http::StatusCode, response::IntoResponse, Json};
+use serde::{ser::Serializer, Serialize};
+use serde_json::json;
+use thiserror::Error;
 
 #[derive(Serialize)]
 pub struct GenericBody<T>
@@ -27,5 +29,31 @@ impl Serialize for Status {
             Status::HttpError => serializer.serialize_str("HttpError"),
             Status::Fail(ref reason) => serializer.serialize_str(reason),
         }
+    }
+}
+// 改变axum默认提取器做错逻辑(返回422 400等) 转换为200返回
+#[derive(Debug, Error)]
+pub enum ApiError {
+    // The `#[from]` attribute generates `From<JsonRejection> for ApiError`
+    // implementation. See `thiserror` docs for more information
+    #[error(transparent)]
+    JsonExtractorRejection(#[from] JsonRejection),
+}
+
+impl IntoResponse for ApiError {
+    fn into_response(self) -> axum::response::Response {
+        let payload = json!({
+            "message": "参数错误".to_string(),
+            "origin": "with_rejection"
+        });
+        let code = match self {
+            ApiError::JsonExtractorRejection(x) => match x {
+                JsonRejection::JsonDataError(_) => StatusCode::OK,
+                JsonRejection::JsonSyntaxError(_) => StatusCode::OK,
+                JsonRejection::MissingJsonContentType(_) => StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            },
+        };
+        (code, Json(payload)).into_response()
     }
 }

@@ -1,12 +1,16 @@
-use crate::configuration::{get_config, Configuration};
-use crate::middlewares::auth::auth as authFn;
-use crate::routes::{catch_all, get_modules, get_user, health_check, login, root};
-use axum::extract::MatchedPath;
-use axum::handler::HandlerWithoutStateExt;
-use axum::http::{header, Method, Request};
-use axum::middleware::{self};
-use axum::routing::{get, post};
-use axum::Router;
+use crate::{
+    configuration::{get_config, Configuration},
+    middlewares::auth::auth as authFn,
+    routes::{catch_all, get_modules, get_user, health_check, login, root},
+};
+use axum::{
+    extract::MatchedPath,
+    handler::HandlerWithoutStateExt,
+    http::{header, Method, Request},
+    middleware::{self},
+    routing::{get, post},
+    Router,
+};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use tower::ServiceBuilder;
 use tower_http::{cors::CorsLayer, services::ServeDir, trace::TraceLayer};

@@ -1,7 +1,9 @@
 // 在tests文件夹中创建mod.rs文件不会添加到测试范围 用于编写一些测试辅助函数
-use axum::body::Body;
-use axum::http::{header, Method, Request};
-use axum::response::Response;
+use axum::{
+    body::Body,
+    http::{header, Method, Request},
+    response::Response,
+};
 use hrs_server::startup::App;
 use serde::Serialize;
 use serde_json::{json, Value};

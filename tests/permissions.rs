@@ -2,8 +2,10 @@
 // 没有完全使用helpers导出的函数会发出#[warn(dead_code)]警告 因为每一个测试文件都会引用一个mod helpers 副本
 // 减少集成测试文件数可以防止编译多个公共依赖副本 减少编译体积
 pub mod helpers;
-use axum::body::{to_bytes, Bytes};
-use axum::http::StatusCode;
+use axum::{
+    body::{to_bytes, Bytes},
+    http::StatusCode,
+};
 use helpers::{do_admin_login, do_login, do_request, get_string, User};
 use hrs_server::response::{GenericBody, Status};
 use serde_json::{from_slice, Value};

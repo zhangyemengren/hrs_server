@@ -1,8 +1,11 @@
 use crate::response::{GenericBody, Status};
-use axum::http::{HeaderMap, StatusCode};
-use axum::middleware::Next;
-use axum::response::{IntoResponse, Response};
-use axum::{extract, Json};
+use axum::{
+    extract,
+    http::{HeaderMap, StatusCode},
+    middleware::Next,
+    response::{IntoResponse, Response},
+    Json,
+};
 use jsonwebtoken as jwt;
 use serde::{Deserialize, Serialize};
 use time::{OffsetDateTime, UtcOffset};

@@ -1,22 +1,26 @@
 use crate::{
     auth::{Claims, Jwt, Permission, UserInfo},
-    response::{GenericBody, Status},
+    response::{ApiError, GenericBody, Status},
     startup::AppState,
     Validator,
 };
-use axum::extract::State;
-use axum::response::{IntoResponse, Response};
-use axum::{Extension, Json};
+use axum::{
+    extract::State,
+    response::{IntoResponse, Response},
+    Extension, Json,
+};
+use axum_extra::extract::WithRejection;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
-use std::error::Error;
-use std::fmt::{self, Display, Formatter};
+use std::{
+    error::Error,
+    fmt::{self, Display, Formatter},
+};
 
 #[derive(Debug, Serialize)]
 struct Module {
     id: i32,
     module_type: String,
-    icon_url: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -36,7 +40,7 @@ pub async fn get_modules(
         .collect();
     let result = sqlx::query_as!(
         Module,
-        "SELECT id, type AS module_type, icon_url FROM modules WHERE id = ANY($1) ORDER BY id",
+        "SELECT id, type AS module_type FROM modules WHERE id = ANY($1) ORDER BY id",
         &permission_list
     )
     .fetch_all(&pool)
@@ -96,7 +100,8 @@ impl Validator for LoginRequest {
 
 pub async fn login(
     State(AppState { pool, .. }): State<AppState>,
-    Json(login_request): Json<LoginRequest>,
+    WithRejection(Json(login_request), _): WithRejection<Json<LoginRequest>, ApiError>,
+    // Json(login_request): Json<LoginRequest>,
 ) -> Response {
     let validate_result = validate_password(&pool, &login_request).await;
     if let Err(e) = validate_result {
@@ -108,7 +113,7 @@ pub async fn login(
         .into_response();
     }
     let data = validate_result.unwrap();
-    // println!("data: {:?}", data);
+    println!("data: {:?}", data);
     let token = Jwt::default()
         .user(data.0)
         .permission(data.1)

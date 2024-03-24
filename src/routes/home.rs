@@ -1,6 +1,5 @@
 use crate::response::{GenericBody, Status};
-use axum::response::IntoResponse;
-use axum::{http::StatusCode, Json};
+use axum::{http::StatusCode, response::IntoResponse, Json};
 
 pub async fn root() -> &'static str {
     "Hello, World!"

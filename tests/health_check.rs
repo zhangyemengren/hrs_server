@@ -1,9 +1,13 @@
 pub mod helpers;
-use axum::body::{to_bytes, Bytes};
-use axum::http::StatusCode;
+use axum::{
+    body::{to_bytes, Bytes},
+    http::StatusCode,
+};
 use helpers::do_request;
-use hrs_server::response::{GenericBody, Status};
-use hrs_server::startup::spawn;
+use hrs_server::{
+    response::{GenericBody, Status},
+    startup::spawn,
+};
 use sqlx::PgPool;
 
 #[sqlx::test]
